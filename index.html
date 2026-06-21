@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aho Budget</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Household Budget</p>
+          <h1>Aho Budget</h1>
+          <p class="muted">A calm view of bills, paychecks, spending money, and the plan ahead.</p>
+        </div>
+
+        <nav aria-label="Budget sections">
+          <button class="nav-button active" data-view="home">Today</button>
+          <button class="nav-button" data-view="calendar">Cashflow</button>
+          <button class="nav-button" data-view="spending">Spending</button>
+          <button class="nav-button" data-view="settings">Plan</button>
+        </nav>
+
+        <section class="bank-note">
+          <h2>Bank Sync Later</h2>
+          <p>Plaid can bring in transactions and suggest categories. It needs the local server, not GitHub Pages alone.</p>
+        </section>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="monthLabel"></p>
+            <h2 id="viewTitle">Today</h2>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" id="prevMonth" aria-label="Previous month">‹</button>
+            <button class="ghost-button" id="nextMonth" aria-label="Next month">›</button>
+            <button class="ghost-button" id="connectBankButton">Connect Bank</button>
+            <button class="primary-button" id="addTransactionButton">Add Spending</button>
+          </div>
+        </header>
+
+        <section class="view active" id="homeView">
+          <div class="hero-panel">
+            <div>
+              <p class="eyebrow">Safe To Spend This Week</p>
+              <p class="hero-number" id="safeToSpend">$0</p>
+              <p class="muted" id="safeToSpendCaption"></p>
+            </div>
+            <div class="meter" aria-hidden="true">
+              <span id="spendingMeter"></span>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <article class="summary-card">
+              <span>Projected Month End</span>
+              <strong id="monthEndBalance">$0</strong>
+            </article>
+            <article class="summary-card">
+              <span>Upcoming Bills</span>
+              <strong id="upcomingBills">$0</strong>
+            </article>
+            <article class="summary-card">
+              <span>Income Left</span>
+              <strong id="incomeLeft">$0</strong>
+            </article>
+          </div>
+
+          <section class="split-layout">
+            <div>
+              <div class="section-heading">
+                <h3>Next 7 Days</h3>
+                <span id="nextSevenCount"></span>
+              </div>
+              <div class="event-list" id="nextSevenList"></div>
+            </div>
+
+            <div>
+              <div class="section-heading">
+                <h3>Recent Spending</h3>
+                <span id="recentSpendTotal"></span>
+              </div>
+              <div class="transaction-list" id="recentTransactions"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="calendarView">
+          <div class="section-heading">
+            <h3>Monthly Cashflow</h3>
+            <span id="calendarSummary"></span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <section class="view" id="spendingView">
+          <div class="spending-layout">
+            <form class="entry-form" id="transactionForm">
+              <h3>Add Spending</h3>
+              <label>
+                Date
+                <input type="date" name="date" required />
+              </label>
+              <label>
+                Description
+                <input type="text" name="description" placeholder="Target, gas, dinner..." required />
+              </label>
+              <label>
+                Category
+                <select name="category" id="categorySelect"></select>
+              </label>
+              <label>
+                Amount
+                <input type="number" name="amount" min="0.01" step="0.01" placeholder="0.00" required />
+              </label>
+              <button class="primary-button" type="submit">Save Spending</button>
+            </form>
+
+            <div>
+              <div class="section-heading">
+                <h3>This Week</h3>
+                <span id="weekRange"></span>
+              </div>
+              <section class="bank-sync-panel">
+                <div>
+                  <h3>Bank Transactions</h3>
+                  <p id="bankSyncStatus">Manual tracking is ready. Plaid sync is available when the server is running.</p>
+                </div>
+                <button class="ghost-button" id="syncBankButton" type="button">Sync Bank</button>
+              </section>
+              <div class="category-bars" id="categoryBars"></div>
+              <div class="transaction-list large" id="allTransactions"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="settingsView">
+          <div class="section-heading">
+            <h3>Recurring Plan</h3>
+            <span>Seeded from Budget3</span>
+          </div>
+          <div class="plan-grid" id="planGrid"></div>
+
+          <section class="roadmap">
+            <h3>Suggested Next Build Steps</h3>
+            <ol>
+              <li>Add sign-in and shared household data.</li>
+              <li>Connect Plaid for read-only bank transactions.</li>
+              <li>Map bank merchants to your categories and keep manual overrides.</li>
+              <li>Add a wife-friendly home screen that hides formulas but shows decisions.</li>
+            </ol>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="transactionDialog">
+      <form method="dialog" class="dialog-card">
+        <button class="close-button" value="cancel" aria-label="Close">×</button>
+        <div id="dialogMount"></div>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
