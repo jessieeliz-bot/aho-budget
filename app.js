@@ -318,7 +318,9 @@ async function connectBank() {
           body: JSON.stringify({ public_token }),
         });
         if (!exchange.ok) throw new Error("Could not exchange public token");
-        setBankStatus("Bank connected. Sync transactions when you are ready.");
+        setView("spending");
+        setBankStatus("Bank connected. Syncing transactions...");
+        await syncBankTransactions();
       },
       onExit: (error) => {
         setBankStatus(error ? `Plaid exited: ${error.error_message}` : "Plaid connection closed.");
@@ -363,9 +365,9 @@ function setBankStatus(message) {
 
 function mapPlaidCategory(category) {
   const value = (category || "").toLowerCase();
+  if (value.includes("restaurant")) return "Eating Out";
   if (value.includes("food") || value.includes("general_merchandise")) return "Groceries";
   if (value.includes("transportation") || value.includes("gas")) return "Gas";
-  if (value.includes("restaurant")) return "Eating Out";
   if (value.includes("home")) return "Household";
   return "Personal";
 }
