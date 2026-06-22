@@ -37,7 +37,7 @@ app.post("/api/create_link_token", async (_request, response, next) => {
     const plaidResponse = await plaidClient.linkTokenCreate({
       user: { client_user_id: process.env.PLAID_CLIENT_USER_ID || "aho-household" },
       client_name: "Aho Budget",
-      products: [Products.Transactions],
+      products: [Products.Transactions, Products.Liabilities],
       country_codes: [CountryCode.Us],
       language: "en",
       transactions: { days_requested: 180 },
@@ -108,6 +108,40 @@ app.post("/api/sync_transactions", async (_request, response, next) => {
   }
 });
 
+app.post("/api/financial_snapshot", async (_request, response, next) => {
+  try {
+    requirePlaidConfig();
+    const store = await readStore();
+    const accounts = [];
+    const liabilities = [];
+    const errors = [];
+
+    for (const item of store.items) {
+      try {
+        const balanceResponse = await plaidClient.accountsBalanceGet({
+          access_token: item.access_token,
+        });
+        accounts.push(...balanceResponse.data.accounts.map(normalizePlaidAccount));
+      } catch (error) {
+        errors.push({ item_id: item.item_id, product: "balance", message: readablePlaidError(error) });
+      }
+
+      try {
+        const liabilitiesResponse = await plaidClient.liabilitiesGet({
+          access_token: item.access_token,
+        });
+        liabilities.push(...normalizePlaidLiabilities(liabilitiesResponse.data));
+      } catch (error) {
+        errors.push({ item_id: item.item_id, product: "liabilities", message: readablePlaidError(error) });
+      }
+    }
+
+    response.json({ accounts, liabilities, errors });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use((error, _request, response, _next) => {
   console.error(error);
   response.status(500).json({ error: error.message || "Unexpected server error" });
@@ -147,4 +181,60 @@ function normalizePlaidTransaction(transaction) {
     category: transaction.personal_finance_category?.primary || null,
     pending: transaction.pending,
   };
+}
+
+function normalizePlaidAccount(account) {
+  return {
+    id: account.account_id,
+    name: account.name,
+    official_name: account.official_name,
+    type: account.type,
+    subtype: account.subtype,
+    mask: account.mask,
+    available: account.balances.available,
+    current: account.balances.current,
+  };
+}
+
+function normalizePlaidLiabilities(data) {
+  const accountsById = new Map(data.accounts.map((account) => [account.account_id, account]));
+  const credit = (data.liabilities.credit || []).map((liability) => {
+    const account = accountsById.get(liability.account_id);
+    const purchaseApr = liability.aprs?.find((apr) => apr.apr_type === "purchase_apr");
+    return {
+      id: liability.account_id,
+      name: account?.name || "Credit card",
+      type: "credit",
+      balance: Math.abs(account?.balances?.current || liability.last_statement_balance || 0),
+      payment: liability.minimum_payment_amount || 0,
+      interest: purchaseApr?.apr_percentage || liability.aprs?.[0]?.apr_percentage || 0,
+      next_payment_due_date: liability.next_payment_due_date || null,
+    };
+  });
+
+  const student = (data.liabilities.student || []).map((liability) => ({
+    id: liability.account_id,
+    name: liability.loan_name || liability.servicer_address?.city || "Student loan",
+    type: "student",
+    balance: Math.abs((liability.origination_principal_amount || 0) + (liability.outstanding_interest_amount || 0)),
+    payment: liability.minimum_payment_amount || 0,
+    interest: liability.interest_rate_percentage || 0,
+    next_payment_due_date: liability.next_payment_due_date || null,
+  }));
+
+  const mortgage = (data.liabilities.mortgage || []).map((liability) => ({
+    id: liability.account_id,
+    name: liability.loan_type_description || "Mortgage",
+    type: "mortgage",
+    balance: Math.abs(liability.origination_principal_amount || 0),
+    payment: liability.next_monthly_payment || 0,
+    interest: liability.interest_rate?.percentage || 0,
+    next_payment_due_date: liability.next_payment_due_date || null,
+  }));
+
+  return [...credit, ...student, ...mortgage];
+}
+
+function readablePlaidError(error) {
+  return error.response?.data?.error_message || error.message || "Unknown Plaid error";
 }

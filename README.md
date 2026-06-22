@@ -37,10 +37,35 @@ Bank sync uses Plaid Link and Transactions Sync:
 
 This local version stores Plaid access tokens in `.data/plaid.json`, which is ignored by Git. Before using real Production bank data, move token storage to a real database and add sign-in.
 
+## Connecting Real Accounts
+
+Sandbox uses fake banks. To connect your real bank, use Plaid's Launch Center in the Plaid Dashboard and request Production access for the products this app uses:
+
+- Transactions, for spending imports.
+- Balance, via `/accounts/balance/get`, for current account balances.
+- Liabilities, for credit card and loan balances when your institutions support it.
+
+Once Plaid approves access:
+
+```bash
+PLAID_ENV=production
+PLAID_SECRET=your-production-secret
+```
+
+Then restart the app:
+
+```bash
+npm start
+```
+
+Keep `.env` and `.data/plaid.json` private. Do not commit them to GitHub.
+
 Plaid references:
 
 - [Plaid Link Web docs](https://plaid.com/docs/link/web/)
 - [Plaid Transactions overview](https://plaid.com/docs/transactions/)
+- [Plaid Balance overview](https://plaid.com/docs/balance/)
+- [Plaid Liabilities overview](https://plaid.com/docs/liabilities/)
 
 ## GitHub Hosting Note
 

@@ -5,6 +5,7 @@ const seedBudget = {
   selectedMonth: toMonthKey(new Date()),
   weeklyAllowance: 500,
   currentBillsAccount: 600,
+  linkedAccounts: [],
   categories: [
     { name: "Groceries", weeklyLimit: 500 },
     { name: "Gas", weeklyLimit: 500 },
@@ -386,6 +387,7 @@ async function syncBankTransactions() {
       .filter((transaction) => !state.transactions.some((saved) => saved.id === transaction.id));
 
     state.transactions.push(...imported);
+    await refreshFinancialSnapshot();
     persist();
     render();
     setBankStatus(`Imported ${imported.length} new spending transactions.`);
@@ -394,8 +396,37 @@ async function syncBankTransactions() {
   }
 }
 
+async function refreshFinancialSnapshot() {
+  const response = await fetch("/api/financial_snapshot", { method: "POST" });
+  if (!response.ok) return;
+
+  const snapshot = await response.json();
+  state.linkedAccounts = snapshot.accounts || [];
+  const cashAccount = chooseCashAccount(state.linkedAccounts);
+  if (cashAccount) {
+    state.currentBillsAccount = Number((cashAccount.available ?? cashAccount.current ?? 0).toFixed(2));
+  }
+
+  if (snapshot.liabilities?.length) {
+    state.debts = snapshot.liabilities
+      .filter((debt) => debt.balance > 0)
+      .map((debt) => ({
+        name: debt.name,
+        balance: debt.balance,
+        payment: debt.payment,
+        interest: debt.interest,
+      }));
+  }
+}
+
 function setBankStatus(message) {
   els.bankSyncStatus.textContent = message;
+}
+
+function chooseCashAccount(accounts) {
+  return accounts.find((account) => account.type === "depository" && account.subtype === "checking")
+    || accounts.find((account) => account.type === "depository")
+    || null;
 }
 
 function mapPlaidCategory(transaction) {
