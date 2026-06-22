@@ -1,15 +1,14 @@
 const STORAGE_KEY = "aho-budget-v1";
+const DATA_VERSION = 3;
 
 const seedBudget = {
-  selectedMonth: "2026-07",
+  selectedMonth: toMonthKey(new Date()),
   weeklyAllowance: 300,
   currentBillsAccount: 600,
   categories: [
     { name: "Groceries", weeklyLimit: 130 },
     { name: "Gas", weeklyLimit: 70 },
-    { name: "Eating Out", weeklyLimit: 45 },
-    { name: "Household", weeklyLimit: 30 },
-    { name: "Personal", weeklyLimit: 25 },
+    { name: "Spending", weeklyLimit: 100 },
   ],
   recurring: [
     { name: "Rent", day: 1, amount: -1000, type: "bill" },
@@ -46,6 +45,21 @@ const seedBudget = {
     { name: "Level Credit", day: 31, amount: -6.95, type: "bill" },
   ],
   plannedEvents: [
+    { date: "2026-06-05", name: "Weekly spending", amount: -300, type: "spending-transfer" },
+    { date: "2026-06-07", name: "Weekly spending", amount: -150, type: "spending-transfer" },
+    { date: "2026-06-12", name: "Paycheck", amount: 1690, type: "income" },
+    { date: "2026-06-13", name: "Extra income", amount: 64, type: "income" },
+    { date: "2026-06-15", name: "Weekly spending", amount: -150, type: "spending-transfer" },
+    { date: "2026-06-16", name: "Paycheck", amount: 1700, type: "income" },
+    { date: "2026-06-16", name: "Tuition", amount: -2260, type: "school" },
+    { date: "2026-06-18", name: "DTE surplus", amount: 140, type: "income" },
+    { date: "2026-06-22", name: "Brigit", amount: 20, type: "income" },
+    { date: "2026-06-26", name: "Paycheck", amount: 1690, type: "income" },
+    { date: "2026-06-27", name: "Brigit", amount: -125, type: "special" },
+    { date: "2026-06-28", name: "Rug", amount: -240.27, type: "special" },
+    { date: "2026-06-28", name: "Weekly spending", amount: -150, type: "spending-transfer" },
+    { date: "2026-06-30", name: "Paycheck", amount: 1700, type: "income" },
+    { date: "2026-06-30", name: "One-time charge", amount: -120, type: "special" },
     { date: "2026-07-01", name: "Paycheck", amount: 1700, type: "income" },
     { date: "2026-07-03", name: "Albert", amount: -300, type: "savings" },
     { date: "2026-07-04", name: "Dave", amount: -515, type: "savings" },
@@ -70,16 +84,19 @@ let state = loadState();
 const els = {
   monthLabel: document.querySelector("#monthLabel"),
   viewTitle: document.querySelector("#viewTitle"),
+  cashToday: document.querySelector("#cashToday"),
+  cashTodayCaption: document.querySelector("#cashTodayCaption"),
   safeToSpend: document.querySelector("#safeToSpend"),
   safeToSpendCaption: document.querySelector("#safeToSpendCaption"),
-  spendingMeter: document.querySelector("#spendingMeter"),
   monthEndBalance: document.querySelector("#monthEndBalance"),
   upcomingBills: document.querySelector("#upcomingBills"),
   incomeLeft: document.querySelector("#incomeLeft"),
   nextSevenList: document.querySelector("#nextSevenList"),
   nextSevenCount: document.querySelector("#nextSevenCount"),
-  recentTransactions: document.querySelector("#recentTransactions"),
-  recentSpendTotal: document.querySelector("#recentSpendTotal"),
+  weekRangeHome: document.querySelector("#weekRangeHome"),
+  homeCategoryBars: document.querySelector("#homeCategoryBars"),
+  debtGoal: document.querySelector("#debtGoal"),
+  babySavingsGoal: document.querySelector("#babySavingsGoal"),
   calendarSummary: document.querySelector("#calendarSummary"),
   calendarGrid: document.querySelector("#calendarGrid"),
   categoryBars: document.querySelector("#categoryBars"),
@@ -101,6 +118,7 @@ document.querySelectorAll(".nav-button").forEach((button) => {
 });
 
 document.querySelector("#prevMonth").addEventListener("click", () => changeMonth(-1));
+document.querySelector("#todayButton").addEventListener("click", jumpToToday);
 document.querySelector("#nextMonth").addEventListener("click", () => changeMonth(1));
 els.addTransactionButton.addEventListener("click", () => setView("spending"));
 els.connectBankButton.addEventListener("click", connectBank);
@@ -114,7 +132,20 @@ function loadState() {
   if (!saved) return structuredClone(seedBudget);
 
   try {
-    return { ...structuredClone(seedBudget), ...JSON.parse(saved) };
+    const parsed = JSON.parse(saved);
+    const merged = { ...structuredClone(seedBudget), ...parsed };
+    if ((parsed.dataVersion || 1) < DATA_VERSION) {
+      merged.selectedMonth = toMonthKey(new Date());
+      merged.categories = structuredClone(seedBudget.categories);
+      merged.plannedEvents = structuredClone(seedBudget.plannedEvents);
+      merged.transactions = (merged.transactions || []).map((transaction) => ({
+        ...transaction,
+        category: normalizeSpendingCategory(transaction.category),
+      }));
+    }
+    merged.dataVersion = DATA_VERSION;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return merged;
   } catch {
     return structuredClone(seedBudget);
   }
@@ -161,40 +192,53 @@ function changeMonth(offset) {
   render();
 }
 
+function jumpToToday() {
+  state.selectedMonth = toMonthKey(new Date());
+  persist();
+  render();
+}
+
 function renderHome() {
   const week = getCurrentWeekRange();
-  const weeklySpent = sumTransactions(week.start, week.end);
-  const safe = Math.max(state.weeklyAllowance - weeklySpent, 0);
-  const spentPercent = Math.min((weeklySpent / state.weeklyAllowance) * 100, 100);
+  const categoryTotals = getWeeklyCategoryTotals(week);
+  const weeklySpent = categoryTotals.reduce((total, category) => total + category.spent, 0);
+  const weeklyLimit = state.categories.reduce((total, category) => total + category.weeklyLimit, 0);
+  const safe = Math.max(weeklyLimit - weeklySpent, 0);
   const monthEvents = getMonthEvents();
   const today = getReferenceDate();
   const nextWeek = addDays(today, 7);
-  const nextSevenEvents = monthEvents.filter((event) => event.date >= today && event.date <= nextWeek);
+  const nextSevenEvents = monthEvents
+    .filter((event) => event.date >= today && event.date <= nextWeek && event.amount < 0)
+    .slice(0, 6);
   const upcomingBillTotal = nextSevenEvents
     .filter((event) => event.amount < 0)
     .reduce((total, event) => total + Math.abs(event.amount), 0);
   const incomeLeft = monthEvents
     .filter((event) => event.amount > 0 && event.date >= today)
     .reduce((total, event) => total + event.amount, 0);
-  const monthEnd = monthEvents.reduce((total, event) => total + event.amount, state.currentBillsAccount);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const monthEnd = getBalanceOnDate(lastDayOfMonth, monthEvents);
+  const cashToday = state.currentBillsAccount;
+  const debtGoal = Math.abs(monthEvents
+    .filter((event) => event.amount < 0 && event.type === "debt")
+    .reduce((total, event) => total + event.amount, 0));
+  const babySavingsGoal = Math.max(monthEnd, 0);
 
+  els.cashToday.textContent = money(cashToday);
+  els.cashTodayCaption.textContent = `Current bills account before the next scheduled items.`;
   els.safeToSpend.textContent = money(safe);
-  els.safeToSpendCaption.textContent = `${money(weeklySpent)} spent of ${money(state.weeklyAllowance)} weekly spending money.`;
-  document.querySelector(".meter").style.background =
-    `conic-gradient(var(--accent) ${spentPercent * 3.6}deg, var(--accent-soft) 0deg)`;
+  els.safeToSpendCaption.textContent = `${money(weeklySpent)} spent of ${money(weeklyLimit)} this week`;
   els.monthEndBalance.textContent = money(monthEnd);
   els.upcomingBills.textContent = money(upcomingBillTotal);
   els.incomeLeft.textContent = money(incomeLeft);
-  els.nextSevenCount.textContent = `${nextSevenEvents.length} items`;
-  els.recentSpendTotal.textContent = `${money(weeklySpent)} this week`;
+  els.nextSevenCount.textContent = `${nextSevenEvents.length} bills`;
+  els.weekRangeHome.textContent = `${formatShortDate(week.start)} - ${formatShortDate(week.end)}`;
+  els.debtGoal.textContent = money(debtGoal);
+  els.babySavingsGoal.textContent = `${money(babySavingsGoal)} potential`;
   els.nextSevenList.innerHTML = nextSevenEvents.length
     ? nextSevenEvents.map(renderEventItem).join("")
     : `<div class="empty-state">Nothing scheduled in the next seven days.</div>`;
-
-  const recent = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-  els.recentTransactions.innerHTML = recent.length
-    ? recent.map(renderTransactionItem).join("")
-    : `<div class="empty-state">No spending entered yet.</div>`;
+  els.homeCategoryBars.innerHTML = renderCategoryBars(categoryTotals);
 }
 
 function renderCalendar() {
@@ -211,12 +255,14 @@ function renderCalendar() {
 
   const income = events.filter((event) => event.amount > 0).reduce((sum, event) => sum + event.amount, 0);
   const outgoing = Math.abs(events.filter((event) => event.amount < 0).reduce((sum, event) => sum + event.amount, 0));
-  els.calendarSummary.textContent = `${money(income)} in, ${money(outgoing)} out`;
+  const monthEnd = getBalanceOnDate(new Date(year, month + 1, 0), events);
+  els.calendarSummary.textContent = `${money(income)} in, ${money(outgoing)} out, ${money(monthEnd)} projected`;
 
   els.calendarGrid.innerHTML = Array.from({ length: days }, (_, index) => {
     const day = index + 1;
     const dateForDay = new Date(year, month, day);
     const dayEvents = byDay.get(day) || [];
+    const balance = getBalanceOnDate(dateForDay, events);
     const isToday = dateForDay.toDateString() === new Date().toDateString();
     return `
       <article class="day-card ${isToday ? "today" : ""}">
@@ -227,6 +273,7 @@ function renderCalendar() {
         <div class="day-events">
           ${dayEvents.map(renderSmallEvent).join("") || `<span class="item-meta">No items</span>`}
         </div>
+        <div class="day-balance">${money(balance)}</div>
       </article>
     `;
   }).join("");
@@ -234,31 +281,32 @@ function renderCalendar() {
 
 function renderSpending() {
   const week = getCurrentWeekRange();
-  const byCategory = state.categories.map((category) => {
-    const spent = state.transactions
-      .filter((transaction) => transaction.category === category.name && isWithin(transaction.date, week.start, week.end))
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-    return { ...category, spent };
-  });
+  const byCategory = getWeeklyCategoryTotals(week);
 
   els.weekRange.textContent = `${formatShortDate(week.start)} - ${formatShortDate(week.end)}`;
-  els.categoryBars.innerHTML = byCategory.map((category) => {
-    const percent = Math.min((category.spent / category.weeklyLimit) * 100, 100);
-    return `
-      <div class="category-row">
-        <header>
-          <strong>${category.name}</strong>
-          <span>${money(category.spent)} / ${money(category.weeklyLimit)}</span>
-        </header>
-        <div class="bar"><span style="width:${percent}%"></span></div>
-      </div>
-    `;
-  }).join("");
+  els.categoryBars.innerHTML = renderCategoryBars(byCategory);
 
   const transactions = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date));
   els.allTransactions.innerHTML = transactions.length
     ? transactions.map(renderTransactionItem).join("")
     : `<div class="empty-state">Spending you add will show up here.</div>`;
+}
+
+function renderCategoryBars(categories) {
+  return categories.map((category) => {
+    const remaining = Math.max(category.weeklyLimit - category.spent, 0);
+    const percent = Math.min((category.spent / category.weeklyLimit) * 100, 100);
+    return `
+      <div class="category-row">
+        <header>
+          <strong>${category.name}</strong>
+          <span>${money(remaining)} left</span>
+        </header>
+        <div class="bar"><span style="width:${percent}%"></span></div>
+        <small>${money(category.spent)} of ${money(category.weeklyLimit)}</small>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderPlan() {
@@ -287,7 +335,7 @@ function saveTransaction(event) {
     id: crypto.randomUUID(),
     date: form.get("date"),
     description: form.get("description").trim(),
-    category: form.get("category"),
+    category: normalizeSpendingCategory(form.get("category")),
     amount: Number(form.get("amount")),
   });
   event.currentTarget.reset();
@@ -344,7 +392,7 @@ async function syncBankTransactions() {
         id: `plaid-${transaction.id}`,
         date: transaction.date,
         description: transaction.merchant || transaction.name,
-        category: mapPlaidCategory(transaction.category),
+        category: mapPlaidCategory(transaction),
         amount: Number(transaction.amount.toFixed(2)),
         source: "plaid",
       }))
@@ -363,13 +411,15 @@ function setBankStatus(message) {
   els.bankSyncStatus.textContent = message;
 }
 
-function mapPlaidCategory(category) {
-  const value = (category || "").toLowerCase();
-  if (value.includes("restaurant")) return "Eating Out";
-  if (value.includes("food") || value.includes("general_merchandise")) return "Groceries";
-  if (value.includes("transportation") || value.includes("gas")) return "Gas";
-  if (value.includes("home")) return "Household";
-  return "Personal";
+function mapPlaidCategory(transaction) {
+  const category = (transaction.category || "").toLowerCase();
+  const merchant = `${transaction.merchant || ""} ${transaction.name || ""}`.toLowerCase();
+  if (merchant.includes("kroger") || merchant.includes("meijer") || merchant.includes("aldi")) return "Groceries";
+  if (merchant.includes("shell") || merchant.includes("bp ") || merchant.includes("exxon") || merchant.includes("marathon")) return "Gas";
+  if (category.includes("transportation") || merchant.includes("uber") || merchant.includes("lyft")) return "Gas";
+  if (category.includes("food") || category.includes("restaurant")) return "Spending";
+  if (category.includes("general_merchandise")) return "Spending";
+  return "Spending";
 }
 
 function getMonthEvents() {
@@ -413,6 +463,43 @@ function sumTransactions(start, end) {
   return state.transactions
     .filter((transaction) => isWithin(transaction.date, start, end))
     .reduce((sum, transaction) => sum + transaction.amount, 0);
+}
+
+function getWeeklyCategoryTotals(week) {
+  return state.categories.map((category) => {
+    const spent = state.transactions
+      .filter((transaction) => normalizeSpendingCategory(transaction.category) === category.name)
+      .filter((transaction) => isWithin(transaction.date, week.start, week.end))
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+    return { ...category, spent };
+  });
+}
+
+function getBalanceOnDate(date, events) {
+  const startingBalance = getCalendarStartingBalance(events);
+  return events
+    .filter((event) => event.date <= date)
+    .reduce((total, event) => total + event.amount, startingBalance);
+}
+
+function getCalendarStartingBalance(events) {
+  const selected = parseMonth(state.selectedMonth);
+  const today = stripTime(new Date());
+  if (selected.getFullYear() !== today.getFullYear() || selected.getMonth() !== today.getMonth()) {
+    return state.currentBillsAccount;
+  }
+
+  const pastEvents = events
+    .filter((event) => event.date < today)
+    .reduce((total, event) => total + event.amount, 0);
+  return state.currentBillsAccount - pastEvents;
+}
+
+function normalizeSpendingCategory(category) {
+  const value = (category || "").toLowerCase();
+  if (value.includes("groc")) return "Groceries";
+  if (value.includes("gas") || value.includes("transport")) return "Gas";
+  return "Spending";
 }
 
 function renderEventItem(event) {

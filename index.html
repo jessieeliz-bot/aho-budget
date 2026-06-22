@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Household Budget</p>
           <h1>Aho Budget</h1>
-          <p class="muted">A calm view of bills, paychecks, spending money, and the plan ahead.</p>
+          <p class="muted">What we have, what is coming up, and what is safe to spend.</p>
         </div>
 
         <nav aria-label="Budget sections">
@@ -23,8 +23,8 @@
         </nav>
 
         <section class="bank-note">
-          <h2>Bank Sync Later</h2>
-          <p>Plaid can bring in transactions and suggest categories. It needs the local server, not GitHub Pages alone.</p>
+          <h2>Bank Sync</h2>
+          <p>Connected transactions can auto-fill weekly spending once categories are recognized.</p>
         </section>
       </aside>
 
@@ -36,6 +36,7 @@
           </div>
           <div class="topbar-actions">
             <button class="ghost-button" id="prevMonth" aria-label="Previous month">‹</button>
+            <button class="ghost-button compact-button" id="todayButton">Today</button>
             <button class="ghost-button" id="nextMonth" aria-label="Next month">›</button>
             <button class="ghost-button" id="connectBankButton">Connect Bank</button>
             <button class="primary-button" id="addTransactionButton">Add Spending</button>
@@ -45,23 +46,25 @@
         <section class="view active" id="homeView">
           <div class="hero-panel">
             <div>
-              <p class="eyebrow">Safe To Spend This Week</p>
-              <p class="hero-number" id="safeToSpend">$0</p>
-              <p class="muted" id="safeToSpendCaption"></p>
+              <p class="eyebrow">Cash Position</p>
+              <p class="hero-number" id="cashToday">$0</p>
+              <p class="muted" id="cashTodayCaption"></p>
             </div>
-            <div class="meter" aria-hidden="true">
-              <span id="spendingMeter"></span>
+            <div class="hero-side">
+              <span>Safe to spend</span>
+              <strong id="safeToSpend">$0</strong>
+              <small id="safeToSpendCaption"></small>
             </div>
           </div>
 
           <div class="summary-grid">
             <article class="summary-card">
-              <span>Projected Month End</span>
-              <strong id="monthEndBalance">$0</strong>
+              <span>Bills Next 7 Days</span>
+              <strong id="upcomingBills">$0</strong>
             </article>
             <article class="summary-card">
-              <span>Upcoming Bills</span>
-              <strong id="upcomingBills">$0</strong>
+              <span>Month End Estimate</span>
+              <strong id="monthEndBalance">$0</strong>
             </article>
             <article class="summary-card">
               <span>Income Left</span>
@@ -72,7 +75,7 @@
           <section class="split-layout">
             <div>
               <div class="section-heading">
-                <h3>Next 7 Days</h3>
+                <h3>Coming Up</h3>
                 <span id="nextSevenCount"></span>
               </div>
               <div class="event-list" id="nextSevenList"></div>
@@ -80,10 +83,21 @@
 
             <div>
               <div class="section-heading">
-                <h3>Recent Spending</h3>
-                <span id="recentSpendTotal"></span>
+                <h3>Weekly Spending</h3>
+                <span id="weekRangeHome"></span>
               </div>
-              <div class="transaction-list" id="recentTransactions"></div>
+              <div class="category-bars" id="homeCategoryBars"></div>
+              <section class="goals-panel">
+                <h3>Goals This Month</h3>
+                <div class="goal-row">
+                  <span>Debt payoff</span>
+                  <strong id="debtGoal">$0</strong>
+                </div>
+                <div class="goal-row">
+                  <span>Baby savings</span>
+                  <strong id="babySavingsGoal">$0</strong>
+                </div>
+              </section>
             </div>
           </section>
         </section>
