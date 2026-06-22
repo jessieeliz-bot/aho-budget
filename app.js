@@ -1,14 +1,22 @@
 const STORAGE_KEY = "aho-budget-v1";
-const DATA_VERSION = 3;
+const DATA_VERSION = 5;
 
 const seedBudget = {
   selectedMonth: toMonthKey(new Date()),
-  weeklyAllowance: 300,
+  weeklyAllowance: 500,
   currentBillsAccount: 600,
   categories: [
-    { name: "Groceries", weeklyLimit: 130 },
-    { name: "Gas", weeklyLimit: 70 },
-    { name: "Spending", weeklyLimit: 100 },
+    { name: "Groceries", weeklyLimit: 500 },
+    { name: "Gas", weeklyLimit: 500 },
+    { name: "Spending", weeklyLimit: 500 },
+  ],
+  debts: [
+    { name: "Chase CC", balance: 2486.97, payment: 211.91, interest: 27.49 },
+    { name: "Apple CC", balance: 1207.7, payment: 40, interest: 27.24 },
+    { name: "Capital One CC", balance: 874.3, payment: 25, interest: 25.74 },
+    { name: "BofA CC", balance: 599.73, payment: 69, interest: 28.24 },
+    { name: "Discover CC", balance: 479, payment: 85, interest: 27.24 },
+    { name: "Moped", balance: 3481.9, payment: 100.37, interest: 14.86 },
   ],
   recurring: [
     { name: "Rent", day: 1, amount: -1000, type: "bill" },
@@ -95,15 +103,18 @@ const els = {
   nextSevenCount: document.querySelector("#nextSevenCount"),
   weekRangeHome: document.querySelector("#weekRangeHome"),
   homeCategoryBars: document.querySelector("#homeCategoryBars"),
+  weeklySpentTotal: document.querySelector("#weeklySpentTotal"),
+  weeklyLeftTotal: document.querySelector("#weeklyLeftTotal"),
+  debtHeadline: document.querySelector("#debtHeadline"),
   debtGoal: document.querySelector("#debtGoal"),
   babySavingsGoal: document.querySelector("#babySavingsGoal"),
+  nextDebtTarget: document.querySelector("#nextDebtTarget"),
   calendarSummary: document.querySelector("#calendarSummary"),
   calendarGrid: document.querySelector("#calendarGrid"),
   categoryBars: document.querySelector("#categoryBars"),
   allTransactions: document.querySelector("#allTransactions"),
   weekRange: document.querySelector("#weekRange"),
   categorySelect: document.querySelector("#categorySelect"),
-  planGrid: document.querySelector("#planGrid"),
   transactionForm: document.querySelector("#transactionForm"),
   addTransactionButton: document.querySelector("#addTransactionButton"),
   connectBankButton: document.querySelector("#connectBankButton"),
@@ -112,10 +123,6 @@ const els = {
   transactionDialog: document.querySelector("#transactionDialog"),
   dialogMount: document.querySelector("#dialogMount"),
 };
-
-document.querySelectorAll(".nav-button").forEach((button) => {
-  button.addEventListener("click", () => setView(button.dataset.view));
-});
 
 document.querySelector("#prevMonth").addEventListener("click", () => changeMonth(-1));
 document.querySelector("#todayButton").addEventListener("click", jumpToToday);
@@ -136,7 +143,9 @@ function loadState() {
     const merged = { ...structuredClone(seedBudget), ...parsed };
     if ((parsed.dataVersion || 1) < DATA_VERSION) {
       merged.selectedMonth = toMonthKey(new Date());
+      merged.weeklyAllowance = seedBudget.weeklyAllowance;
       merged.categories = structuredClone(seedBudget.categories);
+      merged.debts = structuredClone(seedBudget.debts);
       merged.plannedEvents = structuredClone(seedBudget.plannedEvents);
       merged.transactions = (merged.transactions || []).map((transaction) => ({
         ...transaction,
@@ -164,24 +173,14 @@ function render() {
   renderHome();
   renderCalendar();
   renderSpending();
-  renderPlan();
 }
 
 function setView(view) {
-  document.querySelectorAll(".nav-button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === view);
-  });
-  document.querySelectorAll(".view").forEach((section) => {
-    section.classList.toggle("active", section.id === `${view}View`);
-  });
-
-  const titles = {
-    home: "Today",
-    calendar: "Cashflow",
-    spending: "Spending",
-    settings: "Plan",
-  };
-  els.viewTitle.textContent = titles[view];
+  if (view === "spending") {
+    const panel = document.querySelector(".details-panel");
+    panel?.setAttribute("open", "");
+    panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function changeMonth(offset) {
@@ -202,7 +201,7 @@ function renderHome() {
   const week = getCurrentWeekRange();
   const categoryTotals = getWeeklyCategoryTotals(week);
   const weeklySpent = categoryTotals.reduce((total, category) => total + category.spent, 0);
-  const weeklyLimit = state.categories.reduce((total, category) => total + category.weeklyLimit, 0);
+  const weeklyLimit = state.weeklyAllowance;
   const safe = Math.max(weeklyLimit - weeklySpent, 0);
   const monthEvents = getMonthEvents();
   const today = getReferenceDate();
@@ -219,22 +218,24 @@ function renderHome() {
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const monthEnd = getBalanceOnDate(lastDayOfMonth, monthEvents);
   const cashToday = state.currentBillsAccount;
-  const debtGoal = Math.abs(monthEvents
-    .filter((event) => event.amount < 0 && event.type === "debt")
-    .reduce((total, event) => total + event.amount, 0));
   const babySavingsGoal = Math.max(monthEnd, 0);
+  const debtPlan = getDebtPlan(monthEnd);
 
   els.cashToday.textContent = money(cashToday);
   els.cashTodayCaption.textContent = `Current bills account before the next scheduled items.`;
   els.safeToSpend.textContent = money(safe);
   els.safeToSpendCaption.textContent = `${money(weeklySpent)} spent of ${money(weeklyLimit)} this week`;
+  els.weeklySpentTotal.textContent = money(weeklySpent);
+  els.weeklyLeftTotal.textContent = money(safe);
   els.monthEndBalance.textContent = money(monthEnd);
   els.upcomingBills.textContent = money(upcomingBillTotal);
   els.incomeLeft.textContent = money(incomeLeft);
   els.nextSevenCount.textContent = `${nextSevenEvents.length} bills`;
   els.weekRangeHome.textContent = `${formatShortDate(week.start)} - ${formatShortDate(week.end)}`;
-  els.debtGoal.textContent = money(debtGoal);
+  els.debtHeadline.textContent = debtPlan.headline;
+  els.debtGoal.textContent = money(debtPlan.totalDebt);
   els.babySavingsGoal.textContent = `${money(babySavingsGoal)} potential`;
+  els.nextDebtTarget.textContent = debtPlan.nextTarget;
   els.nextSevenList.innerHTML = nextSevenEvents.length
     ? nextSevenEvents.map(renderEventItem).join("")
     : `<div class="empty-state">Nothing scheduled in the next seven days.</div>`;
@@ -294,31 +295,18 @@ function renderSpending() {
 
 function renderCategoryBars(categories) {
   return categories.map((category) => {
-    const remaining = Math.max(category.weeklyLimit - category.spent, 0);
-    const percent = Math.min((category.spent / category.weeklyLimit) * 100, 100);
+    const percent = Math.min((category.spent / state.weeklyAllowance) * 100, 100);
     return `
       <div class="category-row">
         <header>
           <strong>${category.name}</strong>
-          <span>${money(remaining)} left</span>
+          <span>${money(category.spent)}</span>
         </header>
         <div class="bar"><span style="width:${percent}%"></span></div>
-        <small>${money(category.spent)} of ${money(category.weeklyLimit)}</small>
+        <small>${Math.round(percent)}% of the ${money(state.weeklyAllowance)} pile</small>
       </div>
     `;
   }).join("");
-}
-
-function renderPlan() {
-  els.planGrid.innerHTML = state.recurring.map((item) => `
-    <article class="plan-item">
-      <div>
-        <div class="item-name">${item.name}</div>
-        <div class="item-meta">Day ${item.day} · ${titleCase(item.type)}</div>
-      </div>
-      <div class="amount ${item.amount > 0 ? "income" : "bill"}">${money(item.amount)}</div>
-    </article>
-  `).join("");
 }
 
 function populateCategories() {
@@ -366,7 +354,6 @@ async function connectBank() {
           body: JSON.stringify({ public_token }),
         });
         if (!exchange.ok) throw new Error("Could not exchange public token");
-        setView("spending");
         setBankStatus("Bank connected. Syncing transactions...");
         await syncBankTransactions();
       },
@@ -445,7 +432,8 @@ function getMonthEvents() {
 function getCurrentWeekRange() {
   const reference = getReferenceDate();
   const day = reference.getDay();
-  const start = addDays(reference, -day);
+  const daysSinceFriday = (day + 2) % 7;
+  const start = addDays(reference, -daysSinceFriday);
   const end = addDays(start, 6);
   return { start, end };
 }
@@ -471,7 +459,7 @@ function getWeeklyCategoryTotals(week) {
       .filter((transaction) => normalizeSpendingCategory(transaction.category) === category.name)
       .filter((transaction) => isWithin(transaction.date, week.start, week.end))
       .reduce((sum, transaction) => sum + transaction.amount, 0);
-    return { ...category, spent };
+    return { ...category, weeklyLimit: state.weeklyAllowance, spent };
   });
 }
 
@@ -500,6 +488,32 @@ function normalizeSpendingCategory(category) {
   if (value.includes("groc")) return "Groceries";
   if (value.includes("gas") || value.includes("transport")) return "Gas";
   return "Spending";
+}
+
+function getDebtPlan(projectedSurplus) {
+  const debts = [...(state.debts || [])].filter((debt) => debt.balance > 0);
+  const totalDebt = debts.reduce((total, debt) => total + debt.balance, 0);
+  const minimums = debts.reduce((total, debt) => total + debt.payment, 0);
+  const extra = Math.max(projectedSurplus, 0);
+  const monthlyPower = Math.max(minimums + extra, 1);
+  const months = Math.ceil(totalDebt / monthlyPower);
+  const payoffDate = addMonths(new Date(), months);
+  const nextTarget = debts.sort((a, b) => b.interest - a.interest)[0]?.name || "Debt free";
+
+  return {
+    totalDebt,
+    nextTarget,
+    headline: `${months} months to debt-free at this pace · ${payoffDate.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    })}`,
+  };
+}
+
+function addMonths(date, months) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
 }
 
 function renderEventItem(event) {

@@ -10,21 +10,14 @@
     <div class="app-shell">
       <aside class="sidebar">
         <div>
-          <p class="eyebrow">Household Budget</p>
-          <h1>Aho Budget</h1>
-          <p class="muted">What we have, what is coming up, and what is safe to spend.</p>
+          <p class="eyebrow">Jessica + Troye</p>
+          <h1>money party</h1>
+          <p class="muted">Friday spending pile, bills radar, debt payoff, baby fund.</p>
         </div>
 
-        <nav aria-label="Budget sections">
-          <button class="nav-button active" data-view="home">Today</button>
-          <button class="nav-button" data-view="calendar">Cashflow</button>
-          <button class="nav-button" data-view="spending">Spending</button>
-          <button class="nav-button" data-view="settings">Plan</button>
-        </nav>
-
         <section class="bank-note">
-          <h2>Bank Sync</h2>
-          <p>Connected transactions can auto-fill weekly spending once categories are recognized.</p>
+          <h2>Bank sync</h2>
+          <p>Transactions flow into the $500 weekly pile. Categories help you see the flavor, not the rules.</p>
         </section>
       </aside>
 
@@ -32,7 +25,7 @@
         <header class="topbar">
           <div>
             <p class="eyebrow" id="monthLabel"></p>
-            <h2 id="viewTitle">Today</h2>
+            <h2 id="viewTitle">This week</h2>
           </div>
           <div class="topbar-actions">
             <button class="ghost-button" id="prevMonth" aria-label="Previous month">‹</button>
@@ -43,75 +36,93 @@
           </div>
         </header>
 
-        <section class="view active" id="homeView">
+        <section class="dashboard-grid">
           <div class="hero-panel">
             <div>
-              <p class="eyebrow">Cash Position</p>
+              <p class="eyebrow">In Bills Account</p>
               <p class="hero-number" id="cashToday">$0</p>
               <p class="muted" id="cashTodayCaption"></p>
             </div>
             <div class="hero-side">
-              <span>Safe to spend</span>
+              <span>Friday pile left</span>
               <strong id="safeToSpend">$0</strong>
               <small id="safeToSpendCaption"></small>
             </div>
           </div>
 
-          <div class="summary-grid">
-            <article class="summary-card">
-              <span>Bills Next 7 Days</span>
-              <strong id="upcomingBills">$0</strong>
-            </article>
-            <article class="summary-card">
-              <span>Month End Estimate</span>
-              <strong id="monthEndBalance">$0</strong>
-            </article>
-            <article class="summary-card">
-              <span>Income Left</span>
-              <strong id="incomeLeft">$0</strong>
-            </article>
-          </div>
-
-          <section class="split-layout">
-            <div>
-              <div class="section-heading">
-                <h3>Coming Up</h3>
-                <span id="nextSevenCount"></span>
-              </div>
-              <div class="event-list" id="nextSevenList"></div>
+          <section class="panel spending-panel">
+            <div class="section-heading">
+              <h3>$500 pile</h3>
+              <span id="weekRangeHome"></span>
             </div>
-
-            <div>
-              <div class="section-heading">
-                <h3>Weekly Spending</h3>
-                <span id="weekRangeHome"></span>
+            <div class="spending-orbit">
+              <div>
+                <p class="eyebrow">spent</p>
+                <strong id="weeklySpentTotal">$0</strong>
               </div>
-              <div class="category-bars" id="homeCategoryBars"></div>
-              <section class="goals-panel">
-                <h3>Goals This Month</h3>
-                <div class="goal-row">
-                  <span>Debt payoff</span>
-                  <strong id="debtGoal">$0</strong>
-                </div>
-                <div class="goal-row">
-                  <span>Baby savings</span>
-                  <strong id="babySavingsGoal">$0</strong>
-                </div>
-              </section>
+              <div>
+                <p class="eyebrow">left</p>
+                <strong id="weeklyLeftTotal">$0</strong>
+              </div>
+            </div>
+            <div class="category-bars" id="homeCategoryBars"></div>
+            <section class="bank-sync-panel">
+              <p id="bankSyncStatus">Bank sync ready. Pull transactions when you want the pile updated.</p>
+              <button class="ghost-button" id="syncBankButton" type="button">Sync</button>
+            </section>
+          </section>
+
+          <section class="panel">
+            <div class="section-heading">
+              <h3>Bills radar</h3>
+              <span id="nextSevenCount"></span>
+            </div>
+            <div class="summary-strip">
+              <div>
+                <span>Next bills</span>
+                <strong id="upcomingBills">$0</strong>
+              </div>
+              <div>
+                <span>Income left</span>
+                <strong id="incomeLeft">$0</strong>
+              </div>
+              <div>
+                <span>Month end</span>
+                <strong id="monthEndBalance">$0</strong>
+              </div>
+            </div>
+            <div class="event-list" id="nextSevenList"></div>
+          </section>
+
+          <section class="panel goals-panel">
+            <div>
+              <p class="eyebrow">Debt + Baby Plan</p>
+              <h3 id="debtHeadline">Payoff plan loading</h3>
+            </div>
+            <div class="goal-row">
+              <span>Total debt tracked</span>
+              <strong id="debtGoal">$0</strong>
+            </div>
+            <div class="goal-row">
+              <span>Baby fund potential</span>
+              <strong id="babySavingsGoal">$0</strong>
+            </div>
+            <div class="goal-row">
+              <span>Next payoff target</span>
+              <strong id="nextDebtTarget">-</strong>
             </div>
           </section>
-        </section>
 
-        <section class="view" id="calendarView">
-          <div class="section-heading">
-            <h3>Monthly Cashflow</h3>
-            <span id="calendarSummary"></span>
-          </div>
-          <div class="calendar-grid" id="calendarGrid"></div>
-        </section>
+          <section class="panel cashflow-panel">
+            <div class="section-heading">
+              <h3>Cashflow</h3>
+              <span id="calendarSummary"></span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </section>
 
-        <section class="view" id="spendingView">
-          <div class="spending-layout">
+          <details class="panel details-panel">
+            <summary>Manual add + raw transactions</summary>
             <form class="entry-form" id="transactionForm">
               <h3>Add Spending</h3>
               <label>
@@ -132,41 +143,10 @@
               </label>
               <button class="primary-button" type="submit">Save Spending</button>
             </form>
-
-            <div>
-              <div class="section-heading">
-                <h3>This Week</h3>
-                <span id="weekRange"></span>
-              </div>
-              <section class="bank-sync-panel">
-                <div>
-                  <h3>Bank Transactions</h3>
-                  <p id="bankSyncStatus">Manual tracking is ready. Plaid sync is available when the server is running.</p>
-                </div>
-                <button class="ghost-button" id="syncBankButton" type="button">Sync Bank</button>
-              </section>
-              <div class="category-bars" id="categoryBars"></div>
-              <div class="transaction-list large" id="allTransactions"></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="view" id="settingsView">
-          <div class="section-heading">
-            <h3>Recurring Plan</h3>
-            <span>Seeded from Budget3</span>
-          </div>
-          <div class="plan-grid" id="planGrid"></div>
-
-          <section class="roadmap">
-            <h3>Suggested Next Build Steps</h3>
-            <ol>
-              <li>Add sign-in and shared household data.</li>
-              <li>Connect Plaid for read-only bank transactions.</li>
-              <li>Map bank merchants to your categories and keep manual overrides.</li>
-              <li>Add a wife-friendly home screen that hides formulas but shows decisions.</li>
-            </ol>
-          </section>
+            <span id="weekRange" hidden></span>
+            <div class="category-bars" id="categoryBars" hidden></div>
+            <div class="transaction-list large" id="allTransactions"></div>
+          </details>
         </section>
       </main>
     </div>
