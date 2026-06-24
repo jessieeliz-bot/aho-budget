@@ -8,13 +8,15 @@ A lightweight household budgeting app inspired by the existing Google Sheet.
 - Keeps the detailed monthly bill and income calendar from the spreadsheet.
 - Tracks manual spending by category.
 - Saves changes in browser local storage.
-- Runs manually as a static site, or with a small Node server for Plaid bank sync.
+- Runs manually as a static home-screen app.
+- Lets you quick-check "Can I spend this?"
+- Supports manual spending entry and CSV statement uploads.
 
 ## Run Locally
 
 For manual budgeting only, you can still open `index.html` in a browser.
 
-For Plaid bank sync, use the Node server:
+For local testing:
 
 ```bash
 npm install
@@ -24,9 +26,21 @@ npm start
 
 Then visit `http://localhost:5173`.
 
-## Plaid Bank Sync
+## No-Bank Workflow
 
-Bank sync uses Plaid Link and Transactions Sync:
+This app is currently designed to avoid paid bank integrations:
+
+1. Add it to both phones' home screens.
+2. Use the **Can I spend?** box for quick decisions.
+3. Manually add spending when needed.
+4. Upload CSV statements to catch up transactions.
+5. The app keeps everything in browser local storage.
+
+CSV imports work best when the file has columns like `Date`, `Description`, and `Amount`.
+
+## Optional Plaid Bank Sync
+
+Plaid code still exists as an experimental path, but it is not required for the current app direction. Bank sync uses Plaid Link and Transactions Sync:
 
 1. Create a Plaid account and get Sandbox keys from the Plaid dashboard.
 2. Put `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `PLAID_ENV=sandbox` in `.env`.

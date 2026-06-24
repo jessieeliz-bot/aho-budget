@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aho Budget</title>
+    <meta name="theme-color" content="#050505" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -16,8 +18,8 @@
         </div>
 
         <section class="bank-note">
-          <h2>Bank sync</h2>
-          <p>Transactions flow into the $500 weekly pile. Categories help you see the flavor, not the rules.</p>
+          <h2>Home screen app</h2>
+          <p>Add this to your phones. No paid bank connection needed: quick add or upload statements.</p>
         </section>
       </aside>
 
@@ -31,7 +33,6 @@
             <button class="ghost-button" id="prevMonth" aria-label="Previous month">‹</button>
             <button class="ghost-button compact-button" id="todayButton">Today</button>
             <button class="ghost-button" id="nextMonth" aria-label="Next month">›</button>
-            <button class="ghost-button" id="connectBankButton">Connect Bank</button>
             <button class="primary-button" id="addTransactionButton">Add Spending</button>
           </div>
         </header>
@@ -50,6 +51,19 @@
             </div>
           </div>
 
+          <section class="panel answer-panel">
+            <div>
+              <p class="eyebrow">Can I spend?</p>
+              <h3 id="spendAnswer">Type an amount and this will answer like you would.</h3>
+              <p class="muted" id="spendAnswerDetail">Uses the Friday $500 pile after logged spending.</p>
+            </div>
+            <form class="spend-check-form" id="spendCheckForm">
+              <input type="number" name="amount" min="0.01" step="0.01" placeholder="45" aria-label="Amount to spend" required />
+              <input type="text" name="thing" placeholder="on nails, Target, dinner..." aria-label="What for" />
+              <button class="primary-button" type="submit">Check</button>
+            </form>
+          </section>
+
           <section class="panel spending-panel">
             <div class="section-heading">
               <h3>$500 pile</h3>
@@ -66,10 +80,6 @@
               </div>
             </div>
             <div class="category-bars" id="homeCategoryBars"></div>
-            <section class="bank-sync-panel">
-              <p id="bankSyncStatus">Bank sync ready. Pull transactions when you want the pile updated.</p>
-              <button class="ghost-button" id="syncBankButton" type="button">Sync</button>
-            </section>
           </section>
 
           <section class="panel">
@@ -122,7 +132,18 @@
           </section>
 
           <details class="panel details-panel">
-            <summary>Manual add + raw transactions</summary>
+            <summary>Add spending + upload statements</summary>
+            <section class="import-panel">
+              <div>
+                <h3>Upload statement CSV</h3>
+                <p class="muted">Works best with CSV exports that include Date, Description, and Amount columns.</p>
+                <p class="muted" id="importStatus">Nothing imported yet.</p>
+              </div>
+              <label class="file-picker">
+                Choose CSV
+                <input type="file" id="statementUpload" accept=".csv,text/csv" />
+              </label>
+            </section>
             <form class="entry-form" id="transactionForm">
               <h3>Add Spending</h3>
               <label>
@@ -158,7 +179,6 @@
       </form>
     </dialog>
 
-    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -269,6 +269,26 @@ main {
     var(--panel);
 }
 
+.answer-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+  gap: 16px;
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(255, 46, 166, 0.22), rgba(183, 255, 42, 0.07)),
+    var(--panel);
+}
+
+.answer-panel h3 {
+  font-size: clamp(1.3rem, 4vw, 2.4rem);
+}
+
+.spend-check-form {
+  display: grid;
+  grid-template-columns: 0.6fr 1fr auto;
+  gap: 10px;
+}
+
 .spending-orbit {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -456,6 +476,39 @@ main {
   padding: 18px;
 }
 
+.import-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #07070a;
+}
+
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #050505;
+  font-weight: 900;
+}
+
+.file-picker input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .bank-sync-panel {
   display: flex;
   align-items: center;
@@ -638,6 +691,7 @@ dialog::backdrop {
 
   .topbar,
   .hero-panel,
+  .answer-panel,
   .split-layout,
   .spending-layout {
     grid-template-columns: 1fr;
@@ -655,6 +709,16 @@ dialog::backdrop {
   }
 
   .bank-sync-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .spend-check-form,
+  .import-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .import-panel {
     align-items: stretch;
     flex-direction: column;
   }

@@ -97,6 +97,9 @@ const els = {
   cashTodayCaption: document.querySelector("#cashTodayCaption"),
   safeToSpend: document.querySelector("#safeToSpend"),
   safeToSpendCaption: document.querySelector("#safeToSpendCaption"),
+  spendAnswer: document.querySelector("#spendAnswer"),
+  spendAnswerDetail: document.querySelector("#spendAnswerDetail"),
+  spendCheckForm: document.querySelector("#spendCheckForm"),
   monthEndBalance: document.querySelector("#monthEndBalance"),
   upcomingBills: document.querySelector("#upcomingBills"),
   incomeLeft: document.querySelector("#incomeLeft"),
@@ -118,9 +121,8 @@ const els = {
   categorySelect: document.querySelector("#categorySelect"),
   transactionForm: document.querySelector("#transactionForm"),
   addTransactionButton: document.querySelector("#addTransactionButton"),
-  connectBankButton: document.querySelector("#connectBankButton"),
-  syncBankButton: document.querySelector("#syncBankButton"),
-  bankSyncStatus: document.querySelector("#bankSyncStatus"),
+  statementUpload: document.querySelector("#statementUpload"),
+  importStatus: document.querySelector("#importStatus"),
   transactionDialog: document.querySelector("#transactionDialog"),
   dialogMount: document.querySelector("#dialogMount"),
 };
@@ -129,9 +131,10 @@ document.querySelector("#prevMonth").addEventListener("click", () => changeMonth
 document.querySelector("#todayButton").addEventListener("click", jumpToToday);
 document.querySelector("#nextMonth").addEventListener("click", () => changeMonth(1));
 els.addTransactionButton.addEventListener("click", () => setView("spending"));
-els.connectBankButton.addEventListener("click", connectBank);
-els.syncBankButton.addEventListener("click", syncBankTransactions);
+els.spendCheckForm.addEventListener("submit", answerSpendingQuestion);
+els.statementUpload.addEventListener("change", importStatementFile);
 els.transactionForm.addEventListener("submit", saveTransaction);
+registerServiceWorker();
 
 render();
 
@@ -429,6 +432,116 @@ function chooseCashAccount(accounts) {
     || null;
 }
 
+function answerSpendingQuestion(event) {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const amount = Number(form.get("amount"));
+  const thing = form.get("thing")?.trim();
+  const left = getWeeklyPile().left;
+  const after = left - amount;
+
+  if (after >= 100) {
+    els.spendAnswer.textContent = `Yes. Spend the ${money(amount)}${thing ? ` ${thing}` : ""}.`;
+    els.spendAnswerDetail.textContent = `${money(after)} would still be left in the Friday pile.`;
+    return;
+  }
+
+  if (after >= 0) {
+    els.spendAnswer.textContent = `Yes, but it gets tight.`;
+    els.spendAnswerDetail.textContent = `${money(after)} would be left until Friday. Worth it?`;
+    return;
+  }
+
+  els.spendAnswer.textContent = `Not from the weekly pile.`;
+  els.spendAnswerDetail.textContent = `That would put the pile ${money(Math.abs(after))} over. Move money or wait until Friday.`;
+}
+
+async function importStatementFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const rows = parseCsv(text);
+    const imported = rows
+      .map(mapStatementRow)
+      .filter(Boolean)
+      .filter((transaction) => !state.transactions.some((saved) => saved.id === transaction.id));
+
+    state.transactions.push(...imported);
+    persist();
+    render();
+    els.importStatus.textContent = `Imported ${imported.length} spending transactions from ${file.name}.`;
+  } catch (error) {
+    els.importStatus.textContent = `Could not import that file: ${error.message}`;
+  } finally {
+    event.target.value = "";
+  }
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = splitCsvLine(lines[0]).map((header) => header.trim().toLowerCase());
+  return lines.slice(1).map((line) => {
+    const values = splitCsvLine(line);
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
+  });
+}
+
+function splitCsvLine(line) {
+  const values = [];
+  let current = "";
+  let quoted = false;
+
+  for (const char of line) {
+    if (char === "\"") {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      values.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
+function mapStatementRow(row) {
+  const date = row.date || row["transaction date"] || row.posted || row["posted date"];
+  const description = row.description || row.name || row.merchant || row.memo || row.details;
+  const rawAmount = row.amount || row.debit || row.withdrawal || row["transaction amount"];
+  const amount = Number(String(rawAmount).replace(/[$,()]/g, "").trim());
+  if (!date || !description || !Number.isFinite(amount)) return null;
+
+  const spendingAmount = amount < 0 ? Math.abs(amount) : amount;
+  if (spendingAmount <= 0) return null;
+
+  return {
+    id: `csv-${date}-${description}-${spendingAmount}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    date: normalizeStatementDate(date),
+    description,
+    category: categorizeDescription(description),
+    amount: spendingAmount,
+    source: "csv",
+  };
+}
+
+function normalizeStatementDate(value) {
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.valueOf())) return toDateInputValue(parsed);
+  return value;
+}
+
+function categorizeDescription(description) {
+  const value = description.toLowerCase();
+  if (value.includes("kroger") || value.includes("meijer") || value.includes("aldi") || value.includes("grocery")) return "Groceries";
+  if (value.includes("shell") || value.includes("exxon") || value.includes("bp ") || value.includes("marathon") || value.includes("gas")) return "Gas";
+  return "Spending";
+}
+
 function mapPlaidCategory(transaction) {
   const category = (transaction.category || "").toLowerCase();
   const merchant = `${transaction.merchant || ""} ${transaction.name || ""}`.toLowerCase();
@@ -494,6 +607,15 @@ function getWeeklyCategoryTotals(week) {
   });
 }
 
+function getWeeklyPile() {
+  const week = getCurrentWeekRange();
+  const spent = sumTransactions(week.start, week.end);
+  return {
+    spent,
+    left: Math.max(state.weeklyAllowance - spent, 0),
+  };
+}
+
 function getBalanceOnDate(date, events) {
   const startingBalance = getCalendarStartingBalance(events);
   return events
@@ -519,6 +641,12 @@ function normalizeSpendingCategory(category) {
   if (value.includes("groc")) return "Groceries";
   if (value.includes("gas") || value.includes("transport")) return "Gas";
   return "Spending";
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  }
 }
 
 function getDebtPlan(projectedSurplus) {
