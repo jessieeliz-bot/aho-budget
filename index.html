@@ -3,181 +3,141 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aho Budget</title>
     <meta name="theme-color" content="#050505" />
+    <title>Money Party</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   </head>
   <body>
-    <div class="app-shell">
-      <aside class="sidebar">
+    <main class="app">
+      <header class="masthead">
         <div>
           <p class="eyebrow">Jessica + Troye</p>
           <h1>money party</h1>
-          <p class="muted">Friday spending pile, bills radar, debt payoff, baby fund.</p>
         </div>
+        <button class="text-button" id="resetDemoButton" type="button">Reset</button>
+      </header>
 
-        <section class="bank-note">
-          <h2>Home screen app</h2>
-          <p>Add this to your phones. No paid bank connection needed: quick add or upload statements.</p>
-        </section>
-      </aside>
+      <section class="answer-card">
+        <p class="eyebrow">Can I spend?</p>
+        <h2 id="answerText">Yes. You have room.</h2>
+        <p id="answerDetail">Ask about a purchase and the app will answer from the Friday pile.</p>
+        <form class="ask-form" id="askForm">
+          <label>
+            Amount
+            <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="45" required />
+          </label>
+          <label>
+            For
+            <input name="thing" type="text" placeholder="Target, dinner, nails..." />
+          </label>
+          <button class="primary-button" type="submit">Ask</button>
+        </form>
+      </section>
 
-      <main>
-        <header class="topbar">
+      <section class="pile-card">
+        <div class="pile-main">
+          <p class="eyebrow">Friday pile</p>
+          <strong id="pileLeft">$500.00</strong>
+          <span id="weekRange">Fri - Thu</span>
+        </div>
+        <div class="pile-stats">
           <div>
-            <p class="eyebrow" id="monthLabel"></p>
-            <h2 id="viewTitle">This week</h2>
+            <span>Spent</span>
+            <strong id="pileSpent">$0.00</strong>
           </div>
-          <div class="topbar-actions">
-            <button class="ghost-button" id="prevMonth" aria-label="Previous month">‹</button>
-            <button class="ghost-button compact-button" id="todayButton">Today</button>
-            <button class="ghost-button" id="nextMonth" aria-label="Next month">›</button>
-            <button class="primary-button" id="addTransactionButton">Add Spending</button>
+          <div>
+            <span>Weekly limit</span>
+            <strong id="pileLimit">$500.00</strong>
           </div>
-        </header>
+        </div>
+        <div class="meter"><span id="pileMeter"></span></div>
+      </section>
 
-        <section class="dashboard-grid">
-          <div class="hero-panel">
+      <section class="grid two">
+        <article class="panel">
+          <div class="section-heading">
+            <h3>Bills radar</h3>
+            <span id="billsCount">0 upcoming</span>
+          </div>
+          <div class="mini-stats">
             <div>
-              <p class="eyebrow">In Bills Account</p>
-              <p class="hero-number" id="cashToday">$0</p>
-              <p class="muted" id="cashTodayCaption"></p>
+              <span>In bank</span>
+              <strong id="bankBalance">$0.00</strong>
             </div>
-            <div class="hero-side">
-              <span>Friday pile left</span>
-              <strong id="safeToSpend">$0</strong>
-              <small id="safeToSpendCaption"></small>
+            <div>
+              <span>Next bills</span>
+              <strong id="nextBillsTotal">$0.00</strong>
+            </div>
+            <div>
+              <span>Rollover</span>
+              <strong id="rollover">$0.00</strong>
             </div>
           </div>
+          <div class="list" id="billsList"></div>
+        </article>
 
-          <section class="panel answer-panel">
-            <div>
-              <p class="eyebrow">Can I spend?</p>
-              <h3 id="spendAnswer">Type an amount and this will answer like you would.</h3>
-              <p class="muted" id="spendAnswerDetail">Uses the Friday $500 pile after logged spending.</p>
-            </div>
-            <form class="spend-check-form" id="spendCheckForm">
-              <input type="number" name="amount" min="0.01" step="0.01" placeholder="45" aria-label="Amount to spend" required />
-              <input type="text" name="thing" placeholder="on nails, Target, dinner..." aria-label="What for" />
-              <button class="primary-button" type="submit">Check</button>
-            </form>
-          </section>
+        <article class="panel">
+          <div class="section-heading">
+            <h3>Goals</h3>
+            <span>from your sheet</span>
+          </div>
+          <div class="goal">
+            <span>Baby savings goal</span>
+            <strong id="babyGoal">$0.00</strong>
+          </div>
+          <div class="goal">
+            <span>Current savings</span>
+            <strong id="currentSavings">$0.00</strong>
+          </div>
+          <div class="goal">
+            <span>Debt payoff target</span>
+            <strong id="debtTarget">Track monthly</strong>
+          </div>
+        </article>
+      </section>
 
-          <section class="panel spending-panel">
-            <div class="section-heading">
-              <h3>$500 pile</h3>
-              <span id="weekRangeHome"></span>
-            </div>
-            <div class="spending-orbit">
-              <div>
-                <p class="eyebrow">spent</p>
-                <strong id="weeklySpentTotal">$0</strong>
-              </div>
-              <div>
-                <p class="eyebrow">left</p>
-                <strong id="weeklyLeftTotal">$0</strong>
-              </div>
-            </div>
-            <div class="category-bars" id="homeCategoryBars"></div>
-          </section>
+      <section class="panel">
+        <div class="section-heading">
+          <h3>Add spending</h3>
+          <span>quick entry</span>
+        </div>
+        <form class="entry-form" id="spendingForm">
+          <input name="date" type="date" required />
+          <input name="description" type="text" placeholder="What was it?" required />
+          <select name="category">
+            <option>Groceries</option>
+            <option>Gas</option>
+            <option>Spending</option>
+          </select>
+          <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+          <button class="primary-button" type="submit">Add</button>
+        </form>
+      </section>
 
-          <section class="panel">
-            <div class="section-heading">
-              <h3>Bills radar</h3>
-              <span id="nextSevenCount"></span>
-            </div>
-            <div class="summary-strip">
-              <div>
-                <span>Next bills</span>
-                <strong id="upcomingBills">$0</strong>
-              </div>
-              <div>
-                <span>Income left</span>
-                <strong id="incomeLeft">$0</strong>
-              </div>
-              <div>
-                <span>Month end</span>
-                <strong id="monthEndBalance">$0</strong>
-              </div>
-            </div>
-            <div class="event-list" id="nextSevenList"></div>
-          </section>
+      <section class="panel">
+        <div class="section-heading">
+          <h3>Upload bank export</h3>
+          <span>.xls, .xlsx, or .csv</span>
+        </div>
+        <p class="helper">Your bank file has Post Date, Description, Debit, Credit, Balance, and Classification. This app imports debit spending into the Friday pile and keeps credits out.</p>
+        <label class="upload-button">
+          Choose file
+          <input id="statementFile" type="file" accept=".xls,.xlsx,.csv,text/csv" />
+        </label>
+        <p class="helper" id="importStatus">No statement imported yet.</p>
+      </section>
 
-          <section class="panel goals-panel">
-            <div>
-              <p class="eyebrow">Debt + Baby Plan</p>
-              <h3 id="debtHeadline">Payoff plan loading</h3>
-            </div>
-            <div class="goal-row">
-              <span>Total debt tracked</span>
-              <strong id="debtGoal">$0</strong>
-            </div>
-            <div class="goal-row">
-              <span>Baby fund potential</span>
-              <strong id="babySavingsGoal">$0</strong>
-            </div>
-            <div class="goal-row">
-              <span>Next payoff target</span>
-              <strong id="nextDebtTarget">-</strong>
-            </div>
-          </section>
-
-          <section class="panel cashflow-panel">
-            <div class="section-heading">
-              <h3>Cashflow</h3>
-              <span id="calendarSummary"></span>
-            </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
-          </section>
-
-          <details class="panel details-panel">
-            <summary>Add spending + upload statements</summary>
-            <section class="import-panel">
-              <div>
-                <h3>Upload statement CSV</h3>
-                <p class="muted">Works best with CSV exports that include Date, Description, and Amount columns.</p>
-                <p class="muted" id="importStatus">Nothing imported yet.</p>
-              </div>
-              <label class="file-picker">
-                Choose CSV
-                <input type="file" id="statementUpload" accept=".csv,text/csv" />
-              </label>
-            </section>
-            <form class="entry-form" id="transactionForm">
-              <h3>Add Spending</h3>
-              <label>
-                Date
-                <input type="date" name="date" required />
-              </label>
-              <label>
-                Description
-                <input type="text" name="description" placeholder="Target, gas, dinner..." required />
-              </label>
-              <label>
-                Category
-                <select name="category" id="categorySelect"></select>
-              </label>
-              <label>
-                Amount
-                <input type="number" name="amount" min="0.01" step="0.01" placeholder="0.00" required />
-              </label>
-              <button class="primary-button" type="submit">Save Spending</button>
-            </form>
-            <span id="weekRange" hidden></span>
-            <div class="category-bars" id="categoryBars" hidden></div>
-            <div class="transaction-list large" id="allTransactions"></div>
-          </details>
-        </section>
-      </main>
-    </div>
-
-    <dialog id="transactionDialog">
-      <form method="dialog" class="dialog-card">
-        <button class="close-button" value="cancel" aria-label="Close">×</button>
-        <div id="dialogMount"></div>
-      </form>
-    </dialog>
+      <section class="panel">
+        <div class="section-heading">
+          <h3>Recent spending</h3>
+          <span id="transactionCount">0 logged</span>
+        </div>
+        <div class="chips" id="categoryChips"></div>
+        <div class="list" id="transactionList"></div>
+      </section>
+    </main>
 
     <script src="app.js"></script>
   </body>
