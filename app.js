@@ -129,6 +129,8 @@ els.incomeForm.addEventListener("submit", addIncome);
 els.payPeriodBillsList.addEventListener("click", deleteBill);
 els.spendingForm.addEventListener("submit", addManualSpending);
 els.statementFile.addEventListener("change", importStatement);
+els.transactionList.addEventListener("change", assignTransactionToBill);
+els.transactionList.addEventListener("click", deleteTransaction);
 els.transactionList.addEventListener("dblclick", hideTransaction);
 els.resetDemoButton.addEventListener("click", resetApp);
 
@@ -572,10 +574,46 @@ function addManualSpending(event) {
 function hideTransaction(event) {
   const row = event.target.closest("[data-transaction-id]");
   if (!row) return;
+  if (event.target.closest("button, select")) return;
   const hidden = hiddenTransactions();
   hidden.add(row.dataset.transactionId);
   localStorage.setItem(HIDDEN_TRANSACTIONS_KEY, JSON.stringify([...hidden]));
   queueRemoteSave();
+  render();
+}
+
+function assignTransactionToBill(event) {
+  const select = event.target.closest("[data-assign-transaction]");
+  if (!select) return;
+
+  const transaction = state.transactions.find((saved) => saved.id === select.dataset.assignTransaction);
+  if (!transaction) return;
+
+  if (select.value === "__spending") {
+    delete transaction.billId;
+    transaction.ignoreBillMatch = true;
+    transaction.category = categorize(transaction.description);
+  } else {
+    const bill = state.bills.find((saved) => saved.id === select.value);
+    if (!bill) return;
+    transaction.billId = bill.id;
+    delete transaction.ignoreBillMatch;
+    transaction.category = "Bill";
+  }
+
+  saveState();
+  render();
+}
+
+function deleteTransaction(event) {
+  const button = event.target.closest("[data-delete-transaction]");
+  if (!button) return;
+
+  state.transactions = state.transactions.filter((transaction) => transaction.id !== button.dataset.deleteTransaction);
+  const hidden = hiddenTransactions();
+  hidden.delete(button.dataset.deleteTransaction);
+  localStorage.setItem(HIDDEN_TRANSACTIONS_KEY, JSON.stringify([...hidden]));
+  saveState();
   render();
 }
 
@@ -603,7 +641,7 @@ async function importStatement(event) {
     }
     saveState();
     render();
-    els.importStatus.textContent = `Imported ${added} spending rows from ${file.name}. Bills and payments stay manual.`;
+    els.importStatus.textContent = `Imported ${added} rows from ${file.name}. Matched bills stay out of the spending pot.`;
   } catch (error) {
     els.importStatus.textContent = `Could not import ${file.name}: ${error.message}`;
   } finally {
@@ -636,7 +674,7 @@ function mapBankRow(row) {
   if (!date || !description || !amount || credit) return null;
   if (shouldIgnore(description, normalized.classification)) return null;
 
-  return {
+  const transaction = {
     id: `${date}-${description}-${amount}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     date,
     description: cleanDescription(description),
@@ -644,6 +682,12 @@ function mapBankRow(row) {
     amount,
     source: "statement",
   };
+  const bill = matchingBillForTransaction(transaction);
+  if (bill) {
+    transaction.billId = bill.id;
+    transaction.category = "Bill";
+  }
+  return transaction;
 }
 
 function normalizeKeys(row) {
@@ -682,6 +726,40 @@ function categorize(description, classification = "") {
   return "Spending";
 }
 
+function accountedBillForTransaction(transaction) {
+  if (!transaction) return null;
+  if (transaction.ignoreBillMatch) return null;
+  if (transaction.billId) return state.bills.find((bill) => bill.id === transaction.billId) || null;
+  return matchingBillForTransaction(transaction);
+}
+
+function matchingBillForTransaction(transaction) {
+  const amount = Number(transaction.amount);
+  const date = parseLocalDate(transaction.date);
+  const start = addDays(date, -4);
+  const end = addDays(date, 4);
+
+  return expandBills(start, end)
+    .filter((bill) => bill.type !== "income")
+    .filter((bill) => Math.abs(Number(bill.amount) - amount) < 0.02)
+    .find((bill) => transactionMatchesBillText(transaction.description, bill.name)) || null;
+}
+
+function transactionMatchesBillText(description, billName) {
+  const transactionWords = searchableWords(description);
+  const billWords = searchableWords(billName);
+  if (!transactionWords.length || !billWords.length) return false;
+  return billWords.some((word) => transactionWords.includes(word));
+}
+
+function searchableWords(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter((word) => word.length >= 4);
+}
+
 function addTransaction(transaction) {
   state.transactions.push({
     id: crypto.randomUUID(),
@@ -701,7 +779,9 @@ function weeklyPile() {
 }
 
 function currentWeeklyTransactions(week = currentFridayWeek()) {
-  return state.transactions.filter((transaction) => isWithin(transaction.date, week.start, week.end));
+  return state.transactions
+    .filter((transaction) => !accountedBillForTransaction(transaction))
+    .filter((transaction) => isWithin(transaction.date, week.start, week.end));
 }
 
 function plannedWeeklySpendingForRange(start, end) {
@@ -1149,14 +1229,37 @@ function renderForecastDetail(name, date, amount) {
 }
 
 function renderTransaction(transaction) {
+  const bill = accountedBillForTransaction(transaction);
+  const label = bill ? `Bill · ${bill.name}` : transaction.category;
   return `
     <article class="row" data-transaction-id="${escapeHtml(transaction.id)}">
       <div>
         <strong>${transaction.description}</strong>
-        <span>${shortDate(parseLocalDate(transaction.date))} · ${transaction.category}</span>
+        <span>${shortDate(parseLocalDate(transaction.date))} · ${escapeHtml(label)}</span>
       </div>
-      ${moneyHtml(-transaction.amount)}
+      <div class="row-actions transaction-actions">
+        <select class="mini-select" data-assign-transaction="${escapeHtml(transaction.id)}" aria-label="Assign ${escapeHtml(transaction.description)} to a bill">
+          ${renderBillAssignmentOptions(bill)}
+        </select>
+        ${moneyHtml(-transaction.amount)}
+        <button class="icon-button" type="button" data-delete-transaction="${escapeHtml(transaction.id)}" aria-label="Delete ${escapeHtml(transaction.description)}">x</button>
+      </div>
     </article>
+  `;
+}
+
+function renderBillAssignmentOptions(selectedBill) {
+  const billOptions = state.bills
+    .filter((bill) => bill.type !== "income")
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((bill) => `<option value="${escapeHtml(bill.id)}" ${selectedBill?.id === bill.id ? "selected" : ""}>${escapeHtml(bill.name)}</option>`)
+    .join("");
+
+  return `
+    <option value="__spending" ${selectedBill ? "" : "selected"}>Spending pot</option>
+    <option disabled>Assign to bill...</option>
+    ${billOptions}
   `;
 }
 

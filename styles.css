@@ -637,6 +637,18 @@ select {
   gap: 8px;
 }
 
+.transaction-actions {
+  flex-wrap: wrap;
+}
+
+.mini-select {
+  width: min(210px, 42vw);
+  min-height: 32px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
 .row-actions > .money-positive,
 .row-actions > .money-negative,
 .row-actions > .money-zero,
