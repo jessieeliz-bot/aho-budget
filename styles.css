@@ -94,6 +94,13 @@ select {
   gap: 3px;
 }
 
+.install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .install-banner strong {
   color: var(--green);
 }

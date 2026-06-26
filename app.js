@@ -55,11 +55,14 @@ let state = loadState();
 let supabaseClient = null;
 let syncTimer = null;
 let isApplyingRemote = false;
+let deferredInstallPrompt = null;
 
 const els = {
   tabs: document.querySelectorAll("[data-tab]"),
   pages: document.querySelectorAll("[data-page]"),
   installBanner: document.querySelector("#installBanner"),
+  installHelp: document.querySelector("#installHelp"),
+  installAppButton: document.querySelector("#installAppButton"),
   dismissInstallBanner: document.querySelector("#dismissInstallBanner"),
   syncPanel: document.querySelector("#syncPanel"),
   syncForm: document.querySelector("#syncForm"),
@@ -111,6 +114,7 @@ const els = {
 };
 
 els.tabs.forEach((tab) => tab.addEventListener("click", switchTab));
+els.installAppButton.addEventListener("click", installApp);
 els.dismissInstallBanner.addEventListener("click", dismissInstallBanner);
 els.syncForm.addEventListener("submit", saveSyncConfig);
 els.syncNowButton.addEventListener("click", syncNow);
@@ -129,6 +133,7 @@ els.transactionList.addEventListener("dblclick", hideTransaction);
 els.resetDemoButton.addEventListener("click", resetApp);
 
 registerServiceWorker();
+listenForInstallPrompt();
 render();
 initializeSync();
 
@@ -315,6 +320,7 @@ function render() {
   const visibleTransactions = state.transactions.filter((transaction) => !hiddenTransactionIds.has(transaction.id));
 
   els.installBanner.classList.toggle("hidden", localStorage.getItem(INSTALL_BANNER_KEY) === "yes");
+  updateInstallBanner();
   els.balanceInput.value = state.bankBalance.toFixed(2);
   els.paycheckTitle.textContent = `${payPeriod.label}: ${payPeriod.dates}`;
   els.paycheckDate.textContent = "";
@@ -354,6 +360,50 @@ function render() {
   els.billForm.elements.date.value ||= toInputDate(new Date());
   els.incomeForm.elements.date.value ||= toInputDate(new Date());
   els.spendingForm.elements.date.value ||= toInputDate(new Date());
+}
+
+function listenForInstallPrompt() {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallBanner();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    localStorage.setItem(INSTALL_BANNER_KEY, "yes");
+    updateInstallBanner();
+  });
+}
+
+async function installApp() {
+  if (!deferredInstallPrompt) {
+    updateInstallBanner();
+    return;
+  }
+
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice.catch(() => null);
+  deferredInstallPrompt = null;
+  updateInstallBanner();
+}
+
+function updateInstallBanner() {
+  if (localStorage.getItem(INSTALL_BANNER_KEY) === "yes") return;
+
+  const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone;
+  if (standalone) {
+    els.installBanner.classList.add("hidden");
+    return;
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  els.installAppButton.classList.toggle("hidden", !deferredInstallPrompt);
+  els.installHelp.textContent = deferredInstallPrompt
+    ? "Tap Install to add it like an app."
+    : isIos
+      ? "On iPhone: tap Share, then Add to Home Screen."
+      : "Open this in Chrome, then use the browser menu to add it to your home screen.";
 }
 
 function dismissInstallBanner() {

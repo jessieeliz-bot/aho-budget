@@ -23,9 +23,12 @@
       <section class="install-banner" id="installBanner">
         <div>
           <strong>Add to home screen</strong>
-          <span>Install it like an app on Android or iPhone.</span>
+          <span id="installHelp">Android: tap Install. iPhone: Share, then Add to Home Screen.</span>
         </div>
-        <button class="text-button small-button" id="dismissInstallBanner" type="button">Hide</button>
+        <div class="install-actions">
+          <button class="primary-button small-button hidden" id="installAppButton" type="button">Install</button>
+          <button class="text-button small-button" id="dismissInstallBanner" type="button">Hide</button>
+        </div>
       </section>
 
       <details class="sync-panel compact-panel" id="syncPanel">
