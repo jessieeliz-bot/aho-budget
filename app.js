@@ -1463,6 +1463,6 @@ function registerServiceWorker() {
       refreshing = true;
       window.location.reload();
     });
-    navigator.serviceWorker.register("./service-worker.js?v=29").catch(() => {});
+    navigator.serviceWorker.register("./service-worker.js?v=30").catch(() => {});
   }
 }

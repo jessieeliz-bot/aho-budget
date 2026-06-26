@@ -1,11 +1,11 @@
-const CACHE_NAME = "xx-money-v29";
+const CACHE_NAME = "xx-money-v30";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=29",
-  "./app.js?v=29",
-  "./manifest.webmanifest",
-  "./icon.svg",
+  "./styles.css?v=30",
+  "./app.js?v=30",
+  "./manifest.webmanifest?v=30",
+  "./icon.svg?v=30",
 ];
 
 self.addEventListener("install", (event) => {
