@@ -300,21 +300,21 @@ function formatSyncTime(value) {
 }
 
 function render() {
-  const week = currentFridayWeek();
-  const weeklyTransactions = currentWeeklyTransactions(week);
-  const actualWeeklySpending = weeklyTransactions.reduce((total, transaction) => total + transaction.amount, 0);
-  const plannedWeeklySpending = plannedWeeklySpendingForRange(week.start, week.end);
-  const spent = actualWeeklySpending + plannedWeeklySpending;
-  const weeklyLeft = Math.max(state.weeklyLimit - spent, 0);
+  const forecast = buildPayPeriodForecast(5);
+  const currentPeriod = forecast[0];
+  const spendingRange = currentPeriod ? { start: currentPeriod.start, end: currentPeriod.end } : currentSpendingPeriod();
+  const periodTransactions = spendingTransactionsForRange(spendingRange.start, spendingRange.end);
+  const actualPeriodSpending = periodTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+  const plannedPeriodSpending = plannedWeeklySpendingForRange(spendingRange.start, spendingRange.end);
+  const spent = actualPeriodSpending + plannedPeriodSpending;
+  const periodLeft = Math.max(state.weeklyLimit - spent, 0);
   const payPeriod = currentPayPeriod();
   const payPeriodBills = requiredBillsBeforePaycheck(payPeriod);
   const payPeriodBillsTotal = payPeriodBills.reduce((total, bill) => total + bill.amount, 0);
   const afterBills = state.bankBalance - payPeriodBillsTotal;
-  const forecast = buildPayPeriodForecast(5);
-  const currentPeriod = forecast[0];
-  const safeToSpend = Math.max(Math.min(weeklyLeft, currentPeriod?.currentWeekReserve ?? afterBills), 0);
-  const protectedAhead = Math.max(weeklyLeft - safeToSpend, 0);
-  const pot = allocatePot(safeToSpend);
+  const safeToSpend = Math.max(Math.min(periodLeft, currentPeriod?.currentWeekReserve ?? afterBills), 0);
+  const protectedAhead = Math.max(periodLeft - safeToSpend, 0);
+  const pot = allocatePot(state.weeklyLimit, periodTransactions);
   const recurringBills = recurringBillSchedule();
   const oneTimeBills = oneTimeBillSchedule();
   const recurringBillsTotal = recurringBills.reduce((total, bill) => total + bill.amount, 0);
@@ -334,13 +334,13 @@ function render() {
   setMoney(els.pileSpent, -spent);
   setMoney(els.protectedAhead, -protectedAhead);
   setMoney(els.pileLimit, state.weeklyLimit);
-  setMoney(els.potGroceries, pot.groceries);
-  setMoney(els.potGas, pot.gas);
-  setMoney(els.potSpending, pot.spending);
+  els.potGroceries.textContent = pot.groceriesLabel;
+  els.potGas.textContent = pot.gasLabel;
+  els.potSpending.textContent = pot.spendingLabel;
   els.potGroceriesBar.style.width = `${pot.groceriesPercent}%`;
   els.potGasBar.style.width = `${pot.gasPercent}%`;
   els.potSpendingBar.style.width = `${pot.spendingPercent}%`;
-  els.weekRange.textContent = `${shortDate(week.start)} - ${shortDate(week.end)}`;
+  els.weekRange.textContent = `${shortDate(spendingRange.start)} - ${shortDate(spendingRange.end)}`;
   els.forecastSummary.textContent = `${forecast.length} pay periods`;
   els.periodList.innerHTML = forecast.map(renderPayPeriod).join("");
   setMoney(els.bankBalance, state.bankBalance);
@@ -358,7 +358,7 @@ function render() {
     .slice(0, 30)
     .map(renderTransaction)
     .join("") || `<p class="empty">No spending logged yet.</p>`;
-  els.categoryChips.innerHTML = renderCategoryChips(weeklyTransactions);
+  els.categoryChips.innerHTML = renderCategoryChips(periodTransactions);
   els.billForm.elements.date.value ||= toInputDate(new Date());
   els.incomeForm.elements.date.value ||= toInputDate(new Date());
   els.spendingForm.elements.date.value ||= toInputDate(new Date());
@@ -771,17 +771,21 @@ function addTransaction(transaction) {
 }
 
 function weeklyPile() {
-  const week = currentFridayWeek();
-  const spent = currentWeeklyTransactions(week)
+  const period = currentSpendingPeriod();
+  const spent = spendingTransactionsForRange(period.start, period.end)
     .reduce((total, transaction) => total + transaction.amount, 0)
-    + plannedWeeklySpendingForRange(week.start, week.end);
+    + plannedWeeklySpendingForRange(period.start, period.end);
   return { spent, left: Math.max(state.weeklyLimit - spent, 0) };
 }
 
 function currentWeeklyTransactions(week = currentFridayWeek()) {
+  return spendingTransactionsForRange(week.start, week.end);
+}
+
+function spendingTransactionsForRange(start, end) {
   return state.transactions
     .filter((transaction) => !accountedBillForTransaction(transaction))
-    .filter((transaction) => isWithin(transaction.date, week.start, week.end));
+    .filter((transaction) => isWithin(transaction.date, start, end));
 }
 
 function plannedWeeklySpendingForRange(start, end) {
@@ -793,6 +797,16 @@ function plannedWeeklySpendingForRange(start, end) {
 
 function currentFridayWeek() {
   return fridayWeekFor(stripTime(new Date()));
+}
+
+function currentSpendingPeriod(today = stripTime(new Date())) {
+  const start = getCurrentPeriodStart(today);
+  const nextGroup = groupPaychecks(generatePaychecks(start, addDays(today, 60)))
+    .find((group) => group.date > start);
+  return {
+    start,
+    end: addDays(nextGroup?.date || addDays(start, 14), -1),
+  };
 }
 
 function buildPayPeriodForecast(count) {
@@ -1199,7 +1213,7 @@ function renderPayPeriod(period, index) {
         <div><span>Start</span><b class="${moneyClass(period.openingBalance)}">${money(period.openingBalance)}</b></div>
         <div><span>Paychecks</span><b class="${moneyClass(period.incomeTotal)}">${money(period.incomeTotal)}</b></div>
         <div><span>Bills</span><b class="${moneyClass(-period.billTotal)}">${money(-period.billTotal)}</b></div>
-        <div><span>Weekly pot</span><b class="${moneyClass(-period.spendingReserveTotal)}">${money(-period.spendingReserveTotal)}</b></div>
+        <div><span>Period pot</span><b class="${moneyClass(-period.spendingReserveTotal)}">${money(-period.spendingReserveTotal)}</b></div>
         <div><span>Leftover</span><b class="${moneyClass(period.leftover)}">${money(period.leftover)}</b></div>
       </div>
       <div class="period-details">
@@ -1286,20 +1300,23 @@ function renderCategoryCards(transactions) {
   }).join("");
 }
 
-function allocatePot(total) {
-  const max = state.weeklyLimit || 500;
-  const scale = max ? Math.min(total / max, 1) : 0;
-  const groceries = roundMoney(200 * scale);
-  const gas = roundMoney(40 * scale);
-  const spending = roundMoney(Math.max(total - groceries - gas, 0));
+function allocatePot(total, transactions = []) {
+  const spent = categoryTotals(transactions);
+  const groceriesBudget = Math.min(200, total);
+  const gasBudget = Math.min(40, Math.max(total - groceriesBudget, 0));
+  const baseSpendingBudget = Math.max(total - groceriesBudget - gasBudget, 0);
+  const groceriesOver = Math.max((spent.Groceries || 0) - groceriesBudget, 0);
+  const gasOver = Math.max((spent.Gas || 0) - gasBudget, 0);
+  const spendingBudget = Math.max(baseSpendingBudget - groceriesOver - gasOver, 0);
   const denominator = total || 1;
+
   return {
-    groceries,
-    gas,
-    spending,
-    groceriesPercent: roundMoney((groceries / denominator) * 100),
-    gasPercent: roundMoney((gas / denominator) * 100),
-    spendingPercent: roundMoney((spending / denominator) * 100),
+    groceriesLabel: `${money(spent.Groceries || 0)} / ${money(groceriesBudget)}`,
+    gasLabel: `${money(spent.Gas || 0)} / ${money(gasBudget)}`,
+    spendingLabel: `${money(spent.Spending || 0)} / ${money(spendingBudget)}`,
+    groceriesPercent: roundMoney((groceriesBudget / denominator) * 100),
+    gasPercent: roundMoney((gasBudget / denominator) * 100),
+    spendingPercent: roundMoney((spendingBudget / denominator) * 100),
   };
 }
 
@@ -1440,6 +1457,12 @@ function resetApp() {
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register("./service-worker.js?v=27").catch(() => {});
   }
 }

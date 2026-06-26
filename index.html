@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#050505" />
     <title>xx$$money$$xx</title>
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=27" />
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -55,7 +55,7 @@
       <div class="page active" data-page="home">
       <section class="pile-card">
         <div class="pile-main">
-          <p class="eyebrow">Safe to spend <span class="sparkle" aria-hidden="true">✧</span></p>
+          <p class="eyebrow">Safe to spend <span class="sparkle" aria-hidden="true">$</span></p>
           <strong id="pileLeft">$500.00</strong>
           <span id="weekRange">Weekly spending, capped by the forecast</span>
         </div>
@@ -81,7 +81,7 @@
             <strong id="protectedAhead">$0.00</strong>
           </div>
           <div>
-            <span>Weekly cap</span>
+            <span>Period cap</span>
             <strong id="pileLimit">$500.00</strong>
           </div>
         </div>
@@ -123,7 +123,6 @@
         <details class="panel compact-panel">
           <summary class="section-heading">
             <h3>Goals</h3>
-            <span>simple targets</span>
           </summary>
           <div class="goal">
             <span>Baby savings goal</span>
@@ -143,7 +142,6 @@
       <details class="panel compact-panel">
         <summary class="section-heading">
           <h3>Add paycheck or income</h3>
-          <span>summer est, bonus, new job</span>
         </summary>
         <form class="income-form" id="incomeForm">
           <input name="name" type="text" placeholder="Summer est, bonus..." required />
@@ -162,7 +160,6 @@
       <details class="panel compact-panel">
         <summary class="section-heading">
           <h3>Add spending</h3>
-          <span>quick entry</span>
         </summary>
         <form class="entry-form" id="spendingForm">
           <input name="date" type="date" required />
@@ -301,6 +298,6 @@
       </div>
     </main>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=27"></script>
   </body>
 </html>
