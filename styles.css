@@ -584,13 +584,14 @@ select {
   }
 }
 
-@keyframes catDash {
-  from {
-    left: -92px;
+@keyframes catRun {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
   }
 
-  to {
-    left: calc(100% + 12px);
+  50% {
+    transform: translateY(-2px) rotate(2deg);
   }
 }
 
@@ -623,7 +624,6 @@ select {
   position: relative;
   margin-bottom: 0;
   padding: 14px 16px;
-  overflow: hidden;
   cursor: pointer;
   list-style: none;
 }
@@ -637,23 +637,6 @@ select {
   color: var(--pink);
   font-size: 1.3rem;
   font-weight: 900;
-}
-
-.compact-panel > summary::before {
-  position: absolute;
-  left: -92px;
-  bottom: 4px;
-  content: "(=^..^=)";
-  color: var(--green);
-  font-size: 0.88rem;
-  font-weight: 900;
-  opacity: 0;
-  text-shadow: 0 0 10px rgba(199, 255, 46, 0.65);
-}
-
-.compact-panel > summary:hover::before {
-  opacity: 1;
-  animation: catDash 1.25s linear;
 }
 
 .compact-panel[open] > summary::after {
@@ -673,6 +656,17 @@ select {
 .section-heading h3::before {
   content: "$ ";
   color: var(--pink);
+}
+
+.compact-panel > summary h3::after {
+  display: inline-block;
+  margin-left: 8px;
+  content: "(=^..^=)";
+  color: var(--green);
+  font-size: 0.72em;
+  text-shadow: 0 0 10px rgba(199, 255, 46, 0.65);
+  transform-origin: center bottom;
+  animation: catRun 440ms steps(2, end) infinite;
 }
 
 .section-heading span {
