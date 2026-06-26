@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#050505" />
     <title>xx$$money$$xx</title>
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=28" />
+    <link rel="stylesheet" href="styles.css?v=29" />
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -17,7 +17,10 @@
           <p class="eyebrow">Jessica + Troye</p>
           <h1>xx$$money$$xx</h1>
         </div>
-        <button class="text-button" id="resetDemoButton" type="button">Reset</button>
+        <div class="masthead-actions">
+          <button class="primary-button small-button" id="syncNowButton" type="button">Sync now</button>
+          <button class="text-button" id="resetDemoButton" type="button">Reset</button>
+        </div>
       </header>
 
       <section class="install-banner" id="installBanner">
@@ -41,7 +44,6 @@
           <input name="anonKey" type="password" placeholder="anon public key" autocomplete="off" />
           <input name="householdId" type="text" placeholder="household code" autocomplete="off" />
           <button class="primary-button" type="submit">Save sync</button>
-          <button class="text-button small-button" id="syncNowButton" type="button">Sync now</button>
         </form>
         <p class="helper">Use the same Supabase settings and household code on both phones.</p>
       </details>
@@ -298,6 +300,6 @@
       </div>
     </main>
 
-    <script src="app.js?v=28"></script>
+    <script src="app.js?v=29"></script>
   </body>
 </html>

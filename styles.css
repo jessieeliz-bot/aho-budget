@@ -98,6 +98,13 @@ summary:active,
   margin-bottom: 18px;
 }
 
+.masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .install-banner {
   display: flex;
   align-items: center;
@@ -664,9 +671,16 @@ select {
   content: "(=^..^=)";
   color: var(--green);
   font-size: 0.72em;
+  opacity: 0;
   text-shadow: 0 0 10px rgba(199, 255, 46, 0.65);
   transform-origin: center bottom;
   animation: catRun 440ms steps(2, end) infinite;
+  transition: opacity 160ms ease;
+}
+
+.compact-panel > summary:hover h3::after,
+.sync-panel > summary h3::after {
+  opacity: 1;
 }
 
 .section-heading span {
