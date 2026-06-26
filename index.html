@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050505" />
-    <title>Money Party</title>
+    <title>xx$$money$$xx</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -14,75 +14,98 @@
       <header class="masthead">
         <div>
           <p class="eyebrow">Jessica + Troye</p>
-          <h1>money party</h1>
+          <h1>xx$$money$$xx</h1>
         </div>
         <button class="text-button" id="resetDemoButton" type="button">Reset</button>
       </header>
 
-      <section class="answer-card">
-        <p class="eyebrow">Can I spend?</p>
-        <h2 id="answerText">Yes. You have room.</h2>
-        <p id="answerDetail">Ask about a purchase and the app will answer from the Friday pile.</p>
-        <form class="ask-form" id="askForm">
-          <label>
-            Amount
-            <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="45" required />
-          </label>
-          <label>
-            For
-            <input name="thing" type="text" placeholder="Target, dinner, nails..." />
-          </label>
-          <button class="primary-button" type="submit">Ask</button>
-        </form>
+      <section class="install-banner" id="installBanner">
+        <div>
+          <strong>Add to home screen</strong>
+          <span>Install it like an app on Android or iPhone.</span>
+        </div>
+        <button class="text-button small-button" id="dismissInstallBanner" type="button">Hide</button>
       </section>
 
+      <nav class="tabs" aria-label="App pages">
+        <button class="tab-button active" type="button" data-tab="home">Home</button>
+        <button class="tab-button" type="button" data-tab="forecast">Forecast</button>
+        <button class="tab-button" type="button" data-tab="bills">Bills</button>
+      </nav>
+
+      <div class="page active" data-page="home">
       <section class="pile-card">
         <div class="pile-main">
-          <p class="eyebrow">Friday pile</p>
+          <p class="eyebrow">Safe to spend <span class="sparkle" aria-hidden="true">✧</span></p>
           <strong id="pileLeft">$500.00</strong>
-          <span id="weekRange">Fri - Thu</span>
+          <span id="weekRange">Weekly spending, capped by the forecast</span>
+        </div>
+        <div class="pot-panel">
+          <div class="pot-labels">
+            <span><b>Groceries</b><strong id="potGroceries">$0.00</strong></span>
+            <span><b>Gas</b><strong id="potGas">$0.00</strong></span>
+            <span><b>Spending</b><strong id="potSpending">$0.00</strong></span>
+          </div>
+          <div class="pot-bar" aria-label="Shared groceries, gas, and spending pot">
+            <span class="pot-groceries" id="potGroceriesBar"></span>
+            <span class="pot-gas" id="potGasBar"></span>
+            <span class="pot-spending" id="potSpendingBar"></span>
+          </div>
         </div>
         <div class="pile-stats">
           <div>
-            <span>Spent</span>
+            <span>Spent or planned</span>
             <strong id="pileSpent">$0.00</strong>
           </div>
           <div>
-            <span>Weekly limit</span>
+            <span>Held for later</span>
+            <strong id="protectedAhead">$0.00</strong>
+          </div>
+          <div>
+            <span>Weekly cap</span>
             <strong id="pileLimit">$500.00</strong>
           </div>
         </div>
-        <div class="meter"><span id="pileMeter"></span></div>
       </section>
 
-      <section class="grid two">
-        <article class="panel">
-          <div class="section-heading">
-            <h3>Bills radar</h3>
-            <span id="billsCount">0 upcoming</span>
+      <section class="paycheck-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Until next paycheck</p>
+            <h3 id="paycheckTitle">Paycheck checkpoint</h3>
           </div>
-          <div class="mini-stats">
-            <div>
-              <span>In bank</span>
-              <strong id="bankBalance">$0.00</strong>
-            </div>
-            <div>
-              <span>Next bills</span>
-              <strong id="nextBillsTotal">$0.00</strong>
-            </div>
-            <div>
-              <span>Rollover</span>
-              <strong id="rollover">$0.00</strong>
-            </div>
+          <span id="paycheckDate" class="hidden">next pay day</span>
+        </div>
+        <form class="balance-form" id="balanceForm">
+          <label>
+            In checking right now
+            <input id="balanceInput" name="balance" type="number" inputmode="decimal" min="0" step="0.01" required />
+          </label>
+          <button class="primary-button" type="submit">Update</button>
+        </form>
+        <div class="survival-number">
+          <span id="afterBillsLabel">Checking after required bills</span>
+          <strong id="afterBills">$0.00</strong>
+        </div>
+        <div class="mini-stats compact">
+          <div>
+            <span>Required bills</span>
+            <strong id="payPeriodBills">$0.00</strong>
           </div>
-          <div class="list" id="billsList"></div>
-        </article>
+          <div>
+            <span>Checking now</span>
+            <strong id="bankBalance">$0.00</strong>
+          </div>
+        </div>
+        <div class="list" id="payPeriodBillsList"></div>
+      </section>
 
-        <article class="panel">
-          <div class="section-heading">
+      <section class="grid one compact-stack">
+        <details class="panel compact-panel">
+          <summary class="section-heading">
             <h3>Goals</h3>
-            <span>from your sheet</span>
-          </div>
+            <span>simple targets</span>
+          </summary>
           <div class="goal">
             <span>Baby savings goal</span>
             <strong id="babyGoal">$0.00</strong>
@@ -95,14 +118,33 @@
             <span>Debt payoff target</span>
             <strong id="debtTarget">Track monthly</strong>
           </div>
-        </article>
+        </details>
       </section>
 
-      <section class="panel">
-        <div class="section-heading">
+      <details class="panel compact-panel">
+        <summary class="section-heading">
+          <h3>Add paycheck or income</h3>
+          <span>summer est, bonus, new job</span>
+        </summary>
+        <form class="income-form" id="incomeForm">
+          <input name="name" type="text" placeholder="Summer est, bonus..." required />
+          <input name="date" type="date" required />
+          <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+          <select name="repeat">
+            <option value="once">One time</option>
+            <option value="biweekly">Every other Friday</option>
+            <option value="monthly-15">Monthly on 15th</option>
+            <option value="monthly-30">Monthly on 30th</option>
+          </select>
+          <button class="primary-button" type="submit">Add</button>
+        </form>
+      </details>
+
+      <details class="panel compact-panel">
+        <summary class="section-heading">
           <h3>Add spending</h3>
           <span>quick entry</span>
-        </div>
+        </summary>
         <form class="entry-form" id="spendingForm">
           <input name="date" type="date" required />
           <input name="description" type="text" placeholder="What was it?" required />
@@ -114,14 +156,13 @@
           <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
           <button class="primary-button" type="submit">Add</button>
         </form>
-      </section>
+      </details>
 
       <section class="panel">
         <div class="section-heading">
           <h3>Upload bank export</h3>
           <span>.xls, .xlsx, or .csv</span>
         </div>
-        <p class="helper">Your bank file has Post Date, Description, Debit, Credit, Balance, and Classification. This app imports debit spending into the Friday pile and keeps credits out.</p>
         <label class="upload-button">
           Choose file
           <input id="statementFile" type="file" accept=".xls,.xlsx,.csv,text/csv" />
@@ -129,14 +170,116 @@
         <p class="helper" id="importStatus">No statement imported yet.</p>
       </section>
 
-      <section class="panel">
-        <div class="section-heading">
+      <details class="panel compact-panel">
+        <summary class="section-heading">
           <h3>Recent spending</h3>
           <span id="transactionCount">0 logged</span>
-        </div>
+        </summary>
         <div class="chips" id="categoryChips"></div>
         <div class="list" id="transactionList"></div>
-      </section>
+      </details>
+      </div>
+
+      <div class="page" data-page="forecast">
+        <section class="panel">
+          <div class="section-heading">
+            <h3>Pay period forecast</h3>
+            <span id="forecastSummary">rolling leftover</span>
+          </div>
+          <div class="period-list" id="periodList"></div>
+        </section>
+      </div>
+
+      <div class="page" data-page="bills">
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Bills page</p>
+              <h3>Monthly bill schedule</h3>
+            </div>
+          </div>
+          <div class="mini-stats compact">
+            <div>
+              <span>Monthly total</span>
+              <strong id="recurringBillsTotal">$0.00</strong>
+            </div>
+            <div>
+              <span>Recurring bills</span>
+              <strong id="recurringBillsCount">0</strong>
+            </div>
+          </div>
+          <div class="bill-schedule" id="recurringBillsList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <h3>One-time payments</h3>
+            <span>future extras</span>
+          </div>
+          <div class="list" id="oneTimeBillsList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <h3 id="billFormTitle">Add bill or payment</h3>
+            <span>monthly, quarterly, or one time</span>
+          </div>
+          <form class="bill-form" id="billForm">
+            <input name="editId" type="hidden" />
+            <input name="name" type="text" placeholder="Dave finance, Airbnb, phone plan..." required />
+            <input name="date" type="date" required />
+            <input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required />
+            <input name="note" type="text" placeholder="optional note" />
+            <select name="type">
+              <option value="bill">Bill</option>
+              <option value="debt">Debt</option>
+              <option value="savings">Savings</option>
+              <option value="income">Income</option>
+            </select>
+            <select name="repeat">
+              <option value="none">Does not repeat</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Every 3 months</option>
+              <option value="yearly">Annually</option>
+              <option value="weekdays">Every weekday</option>
+              <option value="custom">Custom...</option>
+            </select>
+            <div class="custom-repeat hidden" id="customRepeat">
+              <div class="custom-row">
+                <span>Repeat every</span>
+                <input name="repeatInterval" type="number" min="1" step="1" value="1" />
+                <select name="repeatUnit">
+                  <option value="day">day</option>
+                  <option value="week">week</option>
+                  <option value="month">month</option>
+                  <option value="year">year</option>
+                </select>
+              </div>
+              <div class="weekday-picker" id="weekdayPicker" aria-label="Repeat on weekdays">
+                <label><input type="checkbox" name="repeatDays" value="0" /><span>S</span></label>
+                <label><input type="checkbox" name="repeatDays" value="1" /><span>M</span></label>
+                <label><input type="checkbox" name="repeatDays" value="2" /><span>T</span></label>
+                <label><input type="checkbox" name="repeatDays" value="3" /><span>W</span></label>
+                <label><input type="checkbox" name="repeatDays" value="4" /><span>T</span></label>
+                <label><input type="checkbox" name="repeatDays" value="5" /><span>F</span></label>
+                <label><input type="checkbox" name="repeatDays" value="6" /><span>S</span></label>
+              </div>
+              <div class="custom-row">
+                <span>Ends</span>
+                <select name="repeatEnd">
+                  <option value="never">Never</option>
+                  <option value="on">On date</option>
+                </select>
+                <input name="repeatEndDate" type="date" />
+              </div>
+            </div>
+            <button class="primary-button" id="billSubmitButton" type="submit">Add</button>
+            <button class="text-button hidden" id="cancelBillEditButton" type="button">Cancel</button>
+          </form>
+        </section>
+      </div>
     </main>
 
     <script src="app.js"></script>

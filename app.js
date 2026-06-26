@@ -1,24 +1,50 @@
-const STORAGE_KEY = "money-party-v1";
+const STORAGE_KEY = "xx-money-v5";
+const HIDDEN_TRANSACTIONS_KEY = "xx-money-hidden-transactions-v1";
+const INSTALL_BANNER_KEY = "xx-money-install-banner-dismissed";
 
 const sheetSeed = {
   weeklyLimit: 500,
-  bankBalance: 3799,
+  bankBalance: 104.72,
   rollover: 4021.65,
-  savingsGoal: 7400,
-  currentSavings: 6850,
+  savingsGoal: 2000,
+  currentSavings: 0,
   debtTarget: "Debt paid off by 2030",
+  currentPeriodStart: "2026-06-24",
+  paychecks: [
+    { id: "jessica-biweekly", name: "Jessica paycheck", date: "2026-06-26", amount: 1700, repeat: "biweekly" },
+    { id: "troye-15", name: "Troye paycheck", date: "2026-06-15", amount: 1690, repeat: "monthly-15" },
+    { id: "troye-30", name: "Troye paycheck", date: "2026-06-30", amount: 1700, repeat: "monthly-30" },
+  ],
   bills: [
-    { name: "Affirm MR", date: "2026-06-24", amount: 22.3, type: "debt" },
-    { name: "Spotify", date: "2026-06-25", amount: 16.99, type: "bill" },
-    { name: "Groceries & Gas", date: "2026-06-25", amount: 150, type: "weekly" },
-    { name: "Medical Payment", date: "2026-06-26", amount: 200, type: "bill" },
-    { name: "One Main", date: "2026-06-26", amount: 166, type: "debt" },
-    { name: "Chase CC", date: "2026-06-28", amount: 177, type: "debt" },
-    { name: "Level Credit", date: "2026-06-30", amount: 6.95, type: "bill" },
-    { name: "Apple CC", date: "2026-06-30", amount: 39, type: "debt" },
-    { name: "Rent", date: "2026-07-01", amount: 1350, type: "bill" },
-    { name: "ENT Payment", date: "2026-07-01", amount: 50, type: "bill" },
-    { name: "Ceramics School", date: "2026-07-01", amount: 125, type: "bill" },
+    { id: "rent", name: "Rent", date: "2026-06-01", amount: 1000, type: "bill", repeat: "monthly" },
+    { id: "ent-payment", name: "ENT Payment", date: "2026-06-01", amount: 50, type: "bill", repeat: "monthly" },
+    { id: "capital-one", name: "Capital One", date: "2026-06-03", amount: 27, type: "debt", repeat: "monthly" },
+    { id: "car-insurance", name: "Car Insurance", date: "2026-06-03", amount: 208.8, type: "bill", repeat: "monthly" },
+    { id: "moped", name: "Moped", date: "2026-06-03", amount: 100.37, type: "bill", repeat: "monthly" },
+    { id: "klarna-mr", name: "Klarna MR", date: "2026-06-05", amount: 27.81, type: "debt", repeat: "monthly" },
+    { id: "ceramics-school", name: "Ceramics School", date: "2026-06-08", amount: 125, type: "bill", repeat: "monthly" },
+    { id: "kittypoo", name: "KittyPoo", date: "2026-06-09", amount: 24.48, type: "bill", repeat: "monthly" },
+    { id: "natera", name: "Natera", date: "2026-06-11", amount: 47.79, type: "bill", repeat: "monthly" },
+    { id: "bofa-cc", name: "BofA CC", date: "2026-06-12", amount: 67, type: "debt", repeat: "monthly" },
+    { id: "one-main-12", name: "One Main", date: "2026-06-12", amount: 165, type: "debt", repeat: "monthly" },
+    { id: "affirm-dw", name: "Affirm DW", date: "2026-06-14", amount: 20.99, type: "debt", repeat: "monthly" },
+    { id: "capital-one-cc", name: "Capital One CC", date: "2026-06-14", amount: 25, type: "debt", repeat: "monthly" },
+    { id: "quicksilver-cc", name: "Quicksilver CC", date: "2026-06-15", amount: 27, type: "debt", repeat: "monthly" },
+    { id: "apple-cc", name: "Apple CC", date: "2026-06-15", amount: 42, type: "debt", repeat: "monthly" },
+    { id: "settlement", name: "Settlement", date: "2026-06-16", amount: 309.77, type: "debt", repeat: "monthly" },
+    { id: "affirm-dte1", name: "Affirm DTE1", date: "2026-06-17", amount: 24.51, type: "debt", repeat: "monthly" },
+    { id: "dte", name: "DTE", date: "2026-06-18", amount: 200, type: "bill", repeat: "monthly" },
+    { id: "affirm-ac", name: "Affirm AC", date: "2026-06-19", amount: 61.22, type: "debt", repeat: "monthly" },
+    { id: "curex", name: "Curex", date: "2026-06-20", amount: 59, type: "bill", repeat: "monthly" },
+    { id: "discover-cc", name: "Discover CC", date: "2026-06-21", amount: 35, type: "debt", repeat: "monthly" },
+    { id: "lemonade-tillie", name: "Lemonade Tillie", date: "2026-06-21", amount: 16.89, type: "bill", repeat: "monthly" },
+    { id: "xfinity", name: "Xfinity", date: "2026-06-22", amount: 65, type: "bill", repeat: "monthly" },
+    { id: "affirm-mr", name: "Affirm MR", date: "2026-06-23", amount: 22.3, type: "debt", repeat: "monthly" },
+    { id: "netflix", name: "Netflix", date: "2026-06-23", amount: 7.99, type: "bill", repeat: "monthly" },
+    { id: "spotify", name: "Spotify", date: "2026-06-25", amount: 18.99, type: "bill", repeat: "monthly" },
+    { id: "one-main-26", name: "One Main", date: "2026-06-26", amount: 166, type: "debt", repeat: "monthly" },
+    { id: "chase-cc", name: "Chase CC", date: "2026-06-28", amount: 177, type: "debt", repeat: "monthly" },
+    { id: "level-credit", name: "Level Credit", date: "2026-06-30", amount: 6.95, type: "debt", repeat: "monthly" },
   ],
   transactions: [],
 };
@@ -26,22 +52,46 @@ const sheetSeed = {
 let state = loadState();
 
 const els = {
-  answerText: document.querySelector("#answerText"),
-  answerDetail: document.querySelector("#answerDetail"),
-  askForm: document.querySelector("#askForm"),
+  tabs: document.querySelectorAll("[data-tab]"),
+  pages: document.querySelectorAll("[data-page]"),
+  installBanner: document.querySelector("#installBanner"),
+  dismissInstallBanner: document.querySelector("#dismissInstallBanner"),
+  balanceForm: document.querySelector("#balanceForm"),
+  balanceInput: document.querySelector("#balanceInput"),
+  afterBills: document.querySelector("#afterBills"),
+  paycheckTitle: document.querySelector("#paycheckTitle"),
+  paycheckDate: document.querySelector("#paycheckDate"),
+  payPeriodBills: document.querySelector("#payPeriodBills"),
+  payPeriodBillsList: document.querySelector("#payPeriodBillsList"),
+  forecastSummary: document.querySelector("#forecastSummary"),
+  periodList: document.querySelector("#periodList"),
   pileLeft: document.querySelector("#pileLeft"),
   pileSpent: document.querySelector("#pileSpent"),
+  protectedAhead: document.querySelector("#protectedAhead"),
   pileLimit: document.querySelector("#pileLimit"),
-  pileMeter: document.querySelector("#pileMeter"),
+  potGroceries: document.querySelector("#potGroceries"),
+  potGas: document.querySelector("#potGas"),
+  potSpending: document.querySelector("#potSpending"),
+  potGroceriesBar: document.querySelector("#potGroceriesBar"),
+  potGasBar: document.querySelector("#potGasBar"),
+  potSpendingBar: document.querySelector("#potSpendingBar"),
   weekRange: document.querySelector("#weekRange"),
+  afterBillsLabel: document.querySelector("#afterBillsLabel"),
   bankBalance: document.querySelector("#bankBalance"),
-  nextBillsTotal: document.querySelector("#nextBillsTotal"),
-  rollover: document.querySelector("#rollover"),
-  billsCount: document.querySelector("#billsCount"),
-  billsList: document.querySelector("#billsList"),
   babyGoal: document.querySelector("#babyGoal"),
   currentSavings: document.querySelector("#currentSavings"),
   debtTarget: document.querySelector("#debtTarget"),
+  billForm: document.querySelector("#billForm"),
+  billFormTitle: document.querySelector("#billFormTitle"),
+  billSubmitButton: document.querySelector("#billSubmitButton"),
+  cancelBillEditButton: document.querySelector("#cancelBillEditButton"),
+  customRepeat: document.querySelector("#customRepeat"),
+  weekdayPicker: document.querySelector("#weekdayPicker"),
+  recurringBillsTotal: document.querySelector("#recurringBillsTotal"),
+  recurringBillsCount: document.querySelector("#recurringBillsCount"),
+  recurringBillsList: document.querySelector("#recurringBillsList"),
+  oneTimeBillsList: document.querySelector("#oneTimeBillsList"),
+  incomeForm: document.querySelector("#incomeForm"),
   spendingForm: document.querySelector("#spendingForm"),
   statementFile: document.querySelector("#statementFile"),
   importStatus: document.querySelector("#importStatus"),
@@ -51,9 +101,20 @@ const els = {
   resetDemoButton: document.querySelector("#resetDemoButton"),
 };
 
-els.askForm.addEventListener("submit", answerQuestion);
+els.tabs.forEach((tab) => tab.addEventListener("click", switchTab));
+els.dismissInstallBanner.addEventListener("click", dismissInstallBanner);
+els.balanceForm.addEventListener("submit", updateBalance);
+els.billForm.addEventListener("submit", addBill);
+els.billForm.elements.repeat.addEventListener("change", updateCustomRepeatVisibility);
+els.billForm.elements.repeatUnit.addEventListener("change", updateCustomRepeatVisibility);
+els.cancelBillEditButton.addEventListener("click", cancelBillEdit);
+els.recurringBillsList.addEventListener("click", handleBillPageAction);
+els.oneTimeBillsList.addEventListener("click", handleBillPageAction);
+els.incomeForm.addEventListener("submit", addIncome);
+els.payPeriodBillsList.addEventListener("click", deleteBill);
 els.spendingForm.addEventListener("submit", addManualSpending);
 els.statementFile.addEventListener("change", importStatement);
+els.transactionList.addEventListener("dblclick", hideTransaction);
 els.resetDemoButton.addEventListener("click", resetApp);
 
 registerServiceWorker();
@@ -73,55 +134,215 @@ function saveState() {
 
 function render() {
   const week = currentFridayWeek();
-  const weeklyTransactions = state.transactions.filter((transaction) => isWithin(transaction.date, week.start, week.end));
-  const spent = weeklyTransactions.reduce((total, transaction) => total + transaction.amount, 0);
-  const left = Math.max(state.weeklyLimit - spent, 0);
-  const percent = Math.min((spent / state.weeklyLimit) * 100, 100);
-  const upcomingBills = upcoming(14);
-  const nextBillsTotal = upcomingBills.reduce((total, bill) => total + bill.amount, 0);
+  const weeklyTransactions = currentWeeklyTransactions(week);
+  const actualWeeklySpending = weeklyTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+  const plannedWeeklySpending = plannedWeeklySpendingForRange(week.start, week.end);
+  const spent = actualWeeklySpending + plannedWeeklySpending;
+  const weeklyLeft = Math.max(state.weeklyLimit - spent, 0);
+  const payPeriod = currentPayPeriod();
+  const payPeriodBills = requiredBillsBeforePaycheck(payPeriod);
+  const payPeriodBillsTotal = payPeriodBills.reduce((total, bill) => total + bill.amount, 0);
+  const afterBills = state.bankBalance - payPeriodBillsTotal;
+  const forecast = buildPayPeriodForecast(5);
+  const currentPeriod = forecast[0];
+  const safeToSpend = Math.max(Math.min(weeklyLeft, currentPeriod?.currentWeekReserve ?? afterBills), 0);
+  const protectedAhead = Math.max(weeklyLeft - safeToSpend, 0);
+  const pot = allocatePot(safeToSpend);
+  const recurringBills = recurringBillSchedule();
+  const oneTimeBills = oneTimeBillSchedule();
+  const recurringBillsTotal = recurringBills.reduce((total, bill) => total + bill.amount, 0);
+  const hiddenTransactionIds = hiddenTransactions();
+  const visibleTransactions = state.transactions.filter((transaction) => !hiddenTransactionIds.has(transaction.id));
 
-  els.pileLeft.textContent = money(left);
-  els.pileSpent.textContent = money(spent);
-  els.pileLimit.textContent = money(state.weeklyLimit);
-  els.pileMeter.style.width = `${percent}%`;
+  els.installBanner.classList.toggle("hidden", localStorage.getItem(INSTALL_BANNER_KEY) === "yes");
+  els.balanceInput.value = state.bankBalance.toFixed(2);
+  els.paycheckTitle.textContent = `${payPeriod.label}: ${payPeriod.dates}`;
+  els.paycheckDate.textContent = "";
+  els.afterBillsLabel.textContent = `Checking after bills before ${payPeriod.dates}`;
+  setMoney(els.afterBills, afterBills);
+  setMoney(els.payPeriodBills, -payPeriodBillsTotal);
+  els.payPeriodBillsList.innerHTML = payPeriodBills.map(renderBill).join("") || `<p class="empty">No required bills before payday.</p>`;
+  setMoney(els.pileLeft, safeToSpend);
+  setMoney(els.pileSpent, -spent);
+  setMoney(els.protectedAhead, -protectedAhead);
+  setMoney(els.pileLimit, state.weeklyLimit);
+  setMoney(els.potGroceries, pot.groceries);
+  setMoney(els.potGas, pot.gas);
+  setMoney(els.potSpending, pot.spending);
+  els.potGroceriesBar.style.width = `${pot.groceriesPercent}%`;
+  els.potGasBar.style.width = `${pot.gasPercent}%`;
+  els.potSpendingBar.style.width = `${pot.spendingPercent}%`;
   els.weekRange.textContent = `${shortDate(week.start)} - ${shortDate(week.end)}`;
-  els.bankBalance.textContent = money(state.bankBalance);
-  els.nextBillsTotal.textContent = money(nextBillsTotal);
-  els.rollover.textContent = money(state.rollover);
-  els.babyGoal.textContent = money(state.savingsGoal);
-  els.currentSavings.textContent = money(state.currentSavings);
+  els.forecastSummary.textContent = `${forecast.length} pay periods`;
+  els.periodList.innerHTML = forecast.map(renderPayPeriod).join("");
+  setMoney(els.bankBalance, state.bankBalance);
+  setMoney(els.babyGoal, state.savingsGoal);
+  setMoney(els.currentSavings, state.currentSavings);
   els.debtTarget.textContent = state.debtTarget;
-  els.billsCount.textContent = `${upcomingBills.length} upcoming`;
-  els.billsList.innerHTML = upcomingBills.map(renderBill).join("");
-  els.transactionCount.textContent = `${state.transactions.length} logged`;
-  els.transactionList.innerHTML = state.transactions
+  setMoney(els.recurringBillsTotal, -recurringBillsTotal);
+  els.recurringBillsCount.textContent = String(recurringBills.length);
+  els.recurringBillsList.innerHTML = recurringBills.map(renderScheduleBill).join("") || `<p class="empty">No recurring bills yet.</p>`;
+  els.oneTimeBillsList.innerHTML = oneTimeBills.map(renderOneTimeBill).join("") || `<p class="empty">No one-time payments added.</p>`;
+  els.transactionCount.textContent = `${visibleTransactions.length} visible`;
+  els.transactionList.innerHTML = visibleTransactions
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 30)
     .map(renderTransaction)
     .join("") || `<p class="empty">No spending logged yet.</p>`;
   els.categoryChips.innerHTML = renderCategoryChips(weeklyTransactions);
+  els.billForm.elements.date.value ||= toInputDate(new Date());
+  els.incomeForm.elements.date.value ||= toInputDate(new Date());
   els.spendingForm.elements.date.value ||= toInputDate(new Date());
 }
 
-function answerQuestion(event) {
+function dismissInstallBanner() {
+  localStorage.setItem(INSTALL_BANNER_KEY, "yes");
+  render();
+}
+
+function switchTab(event) {
+  const tabName = event.currentTarget.dataset.tab;
+  els.tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === tabName));
+  els.pages.forEach((page) => page.classList.toggle("active", page.dataset.page === tabName));
+}
+
+function updateBalance(event) {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  const amount = Number(form.get("amount"));
-  const thing = form.get("thing")?.trim();
-  const { left } = weeklyPile();
-  const after = left - amount;
+  state.bankBalance = Number(form.get("balance")) || 0;
+  saveState();
+  render();
+}
 
-  if (after >= 100) {
-    els.answerText.textContent = "Yes. You have room.";
-    els.answerDetail.textContent = `${money(after)} would still be left${thing ? ` after ${thing}` : ""}.`;
-  } else if (after >= 0) {
-    els.answerText.textContent = "Yes, but it makes the week tight.";
-    els.answerDetail.textContent = `${money(after)} would be left until Friday.`;
+function addBill(event) {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const name = form.get("name").trim();
+  const editId = form.get("editId");
+  const repeat = normalizeRepeat(form.get("repeat"));
+  const bill = {
+    id: editId || crypto.randomUUID(),
+    name,
+    date: form.get("date"),
+    amount: Number(form.get("amount")),
+    note: form.get("note").trim(),
+    type: form.get("type"),
+    repeat,
+    recurrence: repeat === "custom" ? readCustomRecurrence(form) : null,
+  };
+  if (editId) {
+    state.bills = state.bills.map((saved) => saved.id === editId ? bill : saved);
   } else {
-    els.answerText.textContent = "Not from the weekly pile.";
-    els.answerDetail.textContent = `That would put you ${money(Math.abs(after))} over.`;
+    state.bills.push(bill);
   }
+  saveState();
+  resetBillForm();
+  render();
+}
+
+function handleBillPageAction(event) {
+  const editButton = event.target.closest("[data-edit-bill]");
+  if (editButton) {
+    editBill(editButton.dataset.editBill, editButton.dataset.editDate);
+    return;
+  }
+  deleteBill(event);
+}
+
+function editBill(billId, shownDate) {
+  const bill = state.bills.find((saved) => saved.id === billId);
+  if (!bill) return;
+  els.billForm.elements.editId.value = bill.id;
+  els.billForm.elements.name.value = bill.name;
+  els.billForm.elements.date.value = shownDate || bill.date;
+  els.billForm.elements.amount.value = bill.amount;
+  els.billForm.elements.note.value = bill.note || "";
+  els.billForm.elements.type.value = bill.type;
+  els.billForm.elements.repeat.value = bill.repeat === "once" ? "none" : bill.repeat || "none";
+  writeCustomRecurrence(bill);
+  updateCustomRepeatVisibility();
+  els.billFormTitle.textContent = "Edit bill or payment";
+  els.billSubmitButton.textContent = "Save";
+  els.cancelBillEditButton.classList.remove("hidden");
+}
+
+function cancelBillEdit() {
+  resetBillForm();
+  render();
+}
+
+function resetBillForm() {
+  els.billForm.reset();
+  els.billForm.elements.editId.value = "";
+  clearRepeatDays();
+  els.billFormTitle.textContent = "Add bill or payment";
+  els.billSubmitButton.textContent = "Add";
+  els.cancelBillEditButton.classList.add("hidden");
+  updateCustomRepeatVisibility();
+}
+
+function updateCustomRepeatVisibility() {
+  const isCustom = els.billForm.elements.repeat.value === "custom";
+  const isWeeklyCustom = isCustom && els.billForm.elements.repeatUnit.value === "week";
+  els.customRepeat.classList.toggle("hidden", !isCustom);
+  els.weekdayPicker.classList.toggle("hidden", !isWeeklyCustom);
+}
+
+function readCustomRecurrence(form) {
+  return {
+    interval: Math.max(Number(form.get("repeatInterval")) || 1, 1),
+    unit: form.get("repeatUnit"),
+    days: form.getAll("repeatDays").map(Number),
+    end: form.get("repeatEnd") === "on" ? form.get("repeatEndDate") : "",
+  };
+}
+
+function writeCustomRecurrence(bill) {
+  const recurrence = bill.recurrence || {};
+  els.billForm.elements.repeatInterval.value = recurrence.interval || 1;
+  els.billForm.elements.repeatUnit.value = recurrence.unit || "month";
+  els.billForm.elements.repeatEnd.value = recurrence.end ? "on" : "never";
+  els.billForm.elements.repeatEndDate.value = recurrence.end || "";
+  clearRepeatDays();
+  for (const day of recurrence.days || []) {
+    const input = els.billForm.querySelector(`[name="repeatDays"][value="${day}"]`);
+    if (input) input.checked = true;
+  }
+}
+
+function clearRepeatDays() {
+  els.billForm.querySelectorAll("[name='repeatDays']").forEach((input) => {
+    input.checked = false;
+  });
+}
+
+function normalizeRepeat(value) {
+  return value === "none" ? "once" : value;
+}
+
+function addIncome(event) {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  state.paychecks.push({
+    id: crypto.randomUUID(),
+    name: form.get("name").trim(),
+    date: form.get("date"),
+    amount: Number(form.get("amount")),
+    repeat: form.get("repeat"),
+  });
+  saveState();
+  event.currentTarget.reset();
+  render();
+}
+
+function deleteBill(event) {
+  const button = event.target.closest("[data-delete-bill]");
+  if (!button) return;
+  const billId = button.dataset.deleteBill;
+  state.bills = state.bills.filter((bill) => bill.id !== billId);
+  saveState();
+  render();
 }
 
 function addManualSpending(event) {
@@ -136,6 +357,23 @@ function addManualSpending(event) {
   });
   event.currentTarget.reset();
   event.currentTarget.elements.date.value = toInputDate(new Date());
+}
+
+function hideTransaction(event) {
+  const row = event.target.closest("[data-transaction-id]");
+  if (!row) return;
+  const hidden = hiddenTransactions();
+  hidden.add(row.dataset.transactionId);
+  localStorage.setItem(HIDDEN_TRANSACTIONS_KEY, JSON.stringify([...hidden]));
+  render();
+}
+
+function hiddenTransactions() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(HIDDEN_TRANSACTIONS_KEY)) || []);
+  } catch {
+    return new Set();
+  }
 }
 
 async function importStatement(event) {
@@ -154,7 +392,7 @@ async function importStatement(event) {
     }
     saveState();
     render();
-    els.importStatus.textContent = `Imported ${added} new spending rows from ${file.name}.`;
+    els.importStatus.textContent = `Imported ${added} spending rows from ${file.name}. Bills and payments stay manual.`;
   } catch (error) {
     els.importStatus.textContent = `Could not import ${file.name}: ${error.message}`;
   } finally {
@@ -228,8 +466,8 @@ function shouldIgnore(description, classification = "") {
 
 function categorize(description, classification = "") {
   const value = `${description} ${classification}`.toLowerCase();
-  if (value.includes("kroger") || value.includes("meijer") || value.includes("trader joe") || value.includes("whole foods") || value.includes("grocer")) return "Groceries";
-  if (value.includes("citgo") || value.includes("exxon") || value.includes("7-eleven") || value.includes("gas")) return "Gas";
+  if (value.includes("kroger") || value.includes("meijer") || value.includes("trader joe") || value.includes("whole foods") || value.includes("grocer") || value.includes("supermarket")) return "Groceries";
+  if (value.includes("citgo") || value.includes("exxon") || value.includes("shell") || value.includes("bp#") || value.includes("marathon") || value.includes("7-eleven") || value.includes("gas")) return "Gas";
   return "Spending";
 }
 
@@ -245,26 +483,336 @@ function addTransaction(transaction) {
 
 function weeklyPile() {
   const week = currentFridayWeek();
-  const spent = state.transactions
-    .filter((transaction) => isWithin(transaction.date, week.start, week.end))
-    .reduce((total, transaction) => total + transaction.amount, 0);
+  const spent = currentWeeklyTransactions(week)
+    .reduce((total, transaction) => total + transaction.amount, 0)
+    + plannedWeeklySpendingForRange(week.start, week.end);
   return { spent, left: Math.max(state.weeklyLimit - spent, 0) };
 }
 
+function currentWeeklyTransactions(week = currentFridayWeek()) {
+  return state.transactions.filter((transaction) => isWithin(transaction.date, week.start, week.end));
+}
+
+function plannedWeeklySpendingForRange(start, end) {
+  return expandBills(start, end)
+    .filter((bill) => bill.type === "weekly")
+    .filter((bill) => bill.dateObj >= start && bill.dateObj <= end)
+    .reduce((total, bill) => total + bill.amount, 0);
+}
+
 function currentFridayWeek() {
+  return fridayWeekFor(stripTime(new Date()));
+}
+
+function buildPayPeriodForecast(count) {
   const today = stripTime(new Date());
-  const daysSinceFriday = (today.getDay() + 2) % 7;
-  const start = addDays(today, -daysSinceFriday);
+  const start = getCurrentPeriodStart(today);
+  const horizon = addDays(today, 140);
+  const paycheckGroups = groupPaychecks(generatePaychecks(start, horizon));
+  const periods = [];
+  let openingBalance = state.bankBalance;
+  let periodStart = start;
+
+  for (let index = 0; index < paycheckGroups.length && periods.length < count; index += 1) {
+    const group = paycheckGroups[index];
+    const nextGroup = paycheckGroups[index + 1];
+    const isBeforeFirstPaycheck = periods.length === 0 && periodStart < group.date;
+    const end = isBeforeFirstPaycheck ? addDays(group.date, -1) : addDays(nextGroup?.date || addDays(group.date, 14), -1);
+    const bills = billsForRange(periodStart, end);
+    const paycheckIncome = isBeforeFirstPaycheck ? [] : group.items.filter((item) => item.dateObj > today);
+    const scheduledIncome = incomeForRange(periodStart, end)
+      .filter((item) => item.dateObj > today)
+      .filter((item) => !paycheckIncome.some((paycheck) => isSameDate(paycheck.dateObj, item.dateObj) && paycheck.amount === item.amount));
+    const income = [...paycheckIncome, ...scheduledIncome].sort((a, b) => a.dateObj - b.dateObj);
+    const incomeTotal = income.reduce((total, item) => total + item.amount, 0);
+    const billTotal = bills.reduce((total, bill) => total + bill.amount, 0);
+    const availableAfterBills = openingBalance + incomeTotal - billTotal;
+    const reserve = spendingReserveForRange(periodStart, end, today, availableAfterBills);
+    const spendingReserveTotal = reserve.total;
+    const leftover = openingBalance + incomeTotal - billTotal - spendingReserveTotal;
+
+    periods.push({
+      start: periodStart,
+      end,
+      income,
+      bills,
+      openingBalance,
+      incomeTotal,
+      billTotal,
+      spendingReserveTotal,
+      currentWeekReserve: reserve.currentWeek,
+      futureWeekReserve: reserve.futureWeeks,
+      leftover,
+    });
+
+    openingBalance = leftover;
+    periodStart = isBeforeFirstPaycheck ? group.date : nextGroup?.date;
+    if (!periodStart) break;
+    if (isBeforeFirstPaycheck) index -= 1;
+  }
+
+  return periods;
+}
+
+function generatePaychecks(start, end) {
+  return state.paychecks
+    .flatMap((paycheck) => expandPaycheck(paycheck, start, end))
+    .sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function expandPaycheck(paycheck, start, end) {
+  const repeat = paycheck.repeat || "once";
+  const firstDate = parseLocalDate(paycheck.date);
+  if (repeat === "once") return firstDate >= start && firstDate <= end ? [paycheckEvent(paycheck, firstDate)] : [];
+  if (repeat === "biweekly") return expandBiweeklyPaycheck(paycheck, start, end);
+  if (repeat === "monthly-15") return expandMonthlyPaycheck(paycheck, start, end, 15);
+  if (repeat === "monthly-30") return expandMonthlyPaycheck(paycheck, start, end, 30);
+  return [];
+}
+
+function expandBiweeklyPaycheck(paycheck, start, end) {
+  const dates = [];
+  const cursor = parseLocalDate(paycheck.date);
+  while (cursor < start) cursor.setDate(cursor.getDate() + 14);
+  while (cursor <= end) {
+    dates.push(paycheckEvent(paycheck, cursor));
+    cursor.setDate(cursor.getDate() + 14);
+  }
+  return dates;
+}
+
+function expandMonthlyPaycheck(paycheck, start, end, day) {
+  const dates = [];
+  const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (cursor <= end) {
+    const date = closestWeekday(new Date(cursor.getFullYear(), cursor.getMonth(), Math.min(day, daysInMonth(cursor))));
+    if (date >= start && date <= end) dates.push(paycheckEvent(paycheck, date));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return dates;
+}
+
+function paycheckEvent(paycheck, date) {
+  return {
+    ...paycheck,
+    date: toInputDate(date),
+    dateObj: new Date(date),
+  };
+}
+
+function groupPaychecks(paychecks) {
+  const groups = [];
+  for (const paycheck of paychecks) {
+    const last = groups[groups.length - 1];
+    if (last && dayDiff(last.date, paycheck.dateObj) < 6) {
+      last.items.push(paycheck);
+      if (paycheck.dateObj < last.date) last.date = paycheck.dateObj;
+    } else {
+      groups.push({ date: paycheck.dateObj, items: [paycheck] });
+    }
+  }
+  return groups;
+}
+
+function getCurrentPeriodStart(today = stripTime(new Date())) {
+  const lookback = addDays(today, -60);
+  const horizon = addDays(today, 60);
+  const groups = groupPaychecks(generatePaychecks(lookback, horizon));
+  const currentGroup = groups
+    .filter((group) => group.date <= today)
+    .at(-1);
+  return currentGroup?.date || today;
+}
+
+function spendingReserveForRange(start, end, today = stripTime(new Date()), available = Infinity) {
+  const currentWeekRange = fridayWeekFor(today);
+  let currentWeekMax = 0;
+  let currentWeekPlanned = 0;
+  let futurePlanned = 0;
+  let weekStart = fridayWeekFor(start).start;
+
+  while (weekStart <= end) {
+    const weekEnd = addDays(weekStart, 6);
+    const overlapsPeriod = weekEnd >= start && weekStart <= end;
+    if (overlapsPeriod && weekEnd >= today) {
+      const isCurrentWeek = isSameDate(weekStart, currentWeekRange.start);
+      const planned = plannedWeeklySpendingForRange(weekStart, weekEnd);
+      if (isCurrentWeek) {
+        currentWeekPlanned = planned;
+        currentWeekMax = weeklyPile().left;
+      } else {
+        futurePlanned += planned;
+      }
+    }
+    weekStart = addDays(weekStart, 7);
+  }
+
+  const requiredPlanned = currentWeekPlanned + futurePlanned;
+  const currentWeek = Math.max(Math.min(currentWeekMax, available - requiredPlanned), 0);
+  const total = Math.max(Math.min(requiredPlanned + currentWeek, available), 0);
+
+  return {
+    total,
+    currentWeek,
+    futureWeeks: Math.min(futurePlanned, total),
+  };
+}
+
+function fridayWeekFor(date) {
+  const day = stripTime(date);
+  const daysSinceFriday = (day.getDay() + 2) % 7;
+  const start = addDays(day, -daysSinceFriday);
   return { start, end: addDays(start, 6) };
+}
+
+function billsForRange(start, end) {
+  return expandBills(start, end)
+    .filter((bill) => bill.type !== "weekly")
+    .filter((bill) => bill.type !== "income")
+    .filter((bill) => bill.dateObj >= start && bill.dateObj <= end)
+    .sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function incomeForRange(start, end) {
+  return expandBills(start, end)
+    .filter((bill) => bill.type === "income")
+    .filter((bill) => bill.dateObj >= start && bill.dateObj <= end)
+    .sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function recurringBillSchedule() {
+  return state.bills
+    .filter((bill) => (bill.repeat || "once") !== "once")
+    .filter((bill) => bill.type !== "income")
+    .slice()
+    .sort((a, b) => billDay(a) - billDay(b) || a.name.localeCompare(b.name));
+}
+
+function oneTimeBillSchedule() {
+  return state.bills
+    .filter((bill) => (bill.repeat || "once") === "once")
+    .map((bill) => ({ ...bill, dateObj: parseLocalDate(bill.date) }))
+    .sort((a, b) => a.dateObj - b.dateObj);
 }
 
 function upcoming(days) {
   const today = stripTime(new Date());
   const end = addDays(today, days);
-  return state.bills
-    .map((bill) => ({ ...bill, dateObj: parseLocalDate(bill.date) }))
+  return expandBills(today, end)
+    .filter((bill) => bill.type !== "income")
     .filter((bill) => bill.dateObj >= today && bill.dateObj <= end)
     .sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function currentPayPeriod() {
+  const today = stripTime(new Date());
+  const start = getCurrentPeriodStart(today);
+  const nextGroup = groupPaychecks(generatePaychecks(start, addDays(today, 45)))
+    .map((group) => ({ ...group, items: group.items.filter((item) => item.dateObj > today) }))
+    .find((group) => group.items.length);
+  const nextPayDate = nextGroup?.items[0]?.dateObj;
+  return {
+    start: toInputDate(start),
+    date: toInputDate(nextPayDate || addDays(today, 14)),
+    label: nextGroup?.items.length > 1 ? "Next paycheck group" : "Next paycheck",
+    dates: nextGroup?.items.map((item) => shortDate(item.dateObj)).join(" + ") || shortDate(addDays(today, 14)),
+    income: nextGroup?.items.reduce((total, item) => total + item.amount, 0) || 0,
+  };
+}
+
+function requiredBillsBeforePaycheck(paycheck) {
+  const start = paycheck.start ? parseLocalDate(paycheck.start) : stripTime(new Date());
+  const payDate = parseLocalDate(paycheck.date);
+  return expandBills(start, payDate)
+    .filter((bill) => bill.type !== "weekly")
+    .filter((bill) => bill.type !== "income")
+    .filter((bill) => bill.dateObj >= start && bill.dateObj < payDate)
+    .sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function expandBills(start, end) {
+  return state.bills.flatMap((bill) => expandBill(bill, start, end));
+}
+
+function expandBill(bill, start, end) {
+  const repeat = bill.repeat || "once";
+  const firstDate = parseLocalDate(bill.date);
+  if (repeat === "once") return [{ ...bill, dateObj: firstDate }];
+  if (repeat === "daily") return expandEveryDays(bill, start, end, 1);
+  if (repeat === "weekly") return expandEveryDays(bill, start, end, 7);
+  if (repeat === "weekdays") return expandWeekdays(bill, start, end);
+  if (repeat === "yearly") return expandEveryMonths(bill, start, end, 12);
+  if (repeat === "custom") return expandCustomBill(bill, start, end);
+  return expandEveryMonths(bill, start, end, repeat === "quarterly" ? 3 : 1);
+}
+
+function expandEveryMonths(bill, start, end, everyMonths) {
+  const firstDate = parseLocalDate(bill.date);
+  const until = recurrenceEnd(bill, end);
+  const dates = [];
+  const cursor = new Date(firstDate);
+  while (cursor < start) cursor.setMonth(cursor.getMonth() + everyMonths);
+  while (cursor <= end && cursor <= until) {
+    dates.push({ ...bill, date: toInputDate(cursor), dateObj: new Date(cursor) });
+    cursor.setMonth(cursor.getMonth() + everyMonths);
+  }
+  return dates;
+}
+
+function expandEveryDays(bill, start, end, everyDays) {
+  const firstDate = parseLocalDate(bill.date);
+  const until = recurrenceEnd(bill, end);
+  const dates = [];
+  const cursor = new Date(firstDate);
+  while (cursor < start) cursor.setDate(cursor.getDate() + everyDays);
+  while (cursor <= end && cursor <= until) {
+    dates.push({ ...bill, date: toInputDate(cursor), dateObj: new Date(cursor) });
+    cursor.setDate(cursor.getDate() + everyDays);
+  }
+  return dates;
+}
+
+function expandWeekdays(bill, start, end) {
+  const firstDate = parseLocalDate(bill.date);
+  const until = recurrenceEnd(bill, end);
+  const dates = [];
+  const cursor = new Date(Math.max(firstDate, start));
+  while (cursor <= end && cursor <= until) {
+    if (cursor.getDay() >= 1 && cursor.getDay() <= 5) {
+      dates.push({ ...bill, date: toInputDate(cursor), dateObj: new Date(cursor) });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
+function expandCustomBill(bill, start, end) {
+  const recurrence = bill.recurrence || {};
+  const interval = Math.max(Number(recurrence.interval) || 1, 1);
+  if (recurrence.unit === "day") return expandEveryDays(bill, start, end, interval);
+  if (recurrence.unit === "month") return expandEveryMonths(bill, start, end, interval);
+  if (recurrence.unit === "year") return expandEveryMonths(bill, start, end, interval * 12);
+  return expandCustomWeeks(bill, start, end, interval, recurrence.days || []);
+}
+
+function expandCustomWeeks(bill, start, end, interval, days) {
+  const firstDate = parseLocalDate(bill.date);
+  const until = recurrenceEnd(bill, end);
+  const repeatDays = days.length ? days : [firstDate.getDay()];
+  const dates = [];
+  const cursor = new Date(Math.max(firstDate, start));
+  while (cursor <= end && cursor <= until) {
+    const weeksSinceStart = Math.floor(dayDiff(firstDate, cursor) / 7);
+    if (weeksSinceStart >= 0 && weeksSinceStart % interval === 0 && repeatDays.includes(cursor.getDay())) {
+      dates.push({ ...bill, date: toInputDate(cursor), dateObj: new Date(cursor) });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
+function recurrenceEnd(bill, fallback) {
+  return bill.recurrence?.end ? parseLocalDate(bill.recurrence.end) : fallback;
 }
 
 function renderBill(bill) {
@@ -272,21 +820,131 @@ function renderBill(bill) {
     <article class="row">
       <div>
         <strong>${bill.name}</strong>
-        <span>${shortDate(bill.dateObj)} · ${bill.type}</span>
+        <span>${shortDate(bill.dateObj)} · ${bill.type}${bill.repeat && bill.repeat !== "once" ? ` · ${bill.repeat}` : ""}${bill.note ? ` · ${escapeHtml(bill.note)}` : ""}</span>
       </div>
-      <b>${money(bill.amount)}</b>
+      <div class="row-actions">
+        ${moneyHtml(-bill.amount)}
+        <button class="icon-button" type="button" data-delete-bill="${bill.id}" aria-label="Delete ${escapeHtml(bill.name)}">x</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderScheduleBill(bill) {
+  const day = billDay(bill);
+  const repeatLabel = repeatDescription(bill);
+  return `
+    <article class="schedule-bill">
+      <div class="day-badge">${day}</div>
+      <div>
+        <strong>${bill.name}</strong>
+        <span>${bill.type} · ${repeatLabel}${bill.note ? ` · ${escapeHtml(bill.note)}` : ""}</span>
+      </div>
+      <div class="row-actions">
+        ${moneyHtml(-bill.amount)}
+        <button class="text-button small-button" type="button" data-edit-bill="${bill.id}">Edit</button>
+        <button class="icon-button" type="button" data-delete-bill="${bill.id}" aria-label="Delete ${escapeHtml(bill.name)}">x</button>
+      </div>
+    </article>
+  `;
+}
+
+function repeatDescription(bill) {
+  if (bill.repeat === "daily") return "daily";
+  if (bill.repeat === "weekly") return "weekly";
+  if (bill.repeat === "quarterly") return "every 3 months";
+  if (bill.repeat === "yearly") return "annually";
+  if (bill.repeat === "weekdays") return "every weekday";
+  if (bill.repeat === "custom") return customRepeatDescription(bill.recurrence);
+  return "monthly";
+}
+
+function customRepeatDescription(recurrence = {}) {
+  const interval = Math.max(Number(recurrence.interval) || 1, 1);
+  const unit = recurrence.unit || "month";
+  const plural = interval === 1 ? unit : `${unit}s`;
+  const end = recurrence.end ? ` until ${shortDate(parseLocalDate(recurrence.end))}` : "";
+  return `every ${interval} ${plural}${end}`;
+}
+
+function renderOneTimeBill(bill) {
+  return `
+    <article class="row monthly-row">
+      <div>
+        <strong>${bill.name}</strong>
+        <span>${shortDate(bill.dateObj)} · one time · ${bill.type}${bill.note ? ` · ${escapeHtml(bill.note)}` : ""}</span>
+      </div>
+      <div class="row-actions">
+        ${moneyHtml(bill.type === "income" ? bill.amount : -bill.amount)}
+        <button class="text-button small-button" type="button" data-edit-bill="${bill.id}" data-edit-date="${bill.date}">Edit</button>
+        <button class="icon-button" type="button" data-delete-bill="${bill.id}" aria-label="Delete ${escapeHtml(bill.name)}">x</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderPayPeriod(period, index) {
+  const title = index === 0 ? "Now" : shortDate(period.start);
+  const incomeText = period.income.length
+    ? period.income.map((item) => `${escapeHtml(item.name)} ${moneyHtml(item.amount)}`).join(", ")
+    : "No paycheck in this short period";
+  const incomeDetails = period.income.length
+    ? period.income.map((item) => renderForecastDetail(item.name, item.dateObj, item.amount)).join("")
+    : `<p class="empty">No income in this period.</p>`;
+  const billDetails = period.bills.length
+    ? period.bills.map((bill) => renderForecastDetail(bill.name, bill.dateObj, -bill.amount)).join("")
+    : `<p class="empty">No bills in this period.</p>`;
+
+  return `
+    <details class="period-card" ${index === 0 ? "open" : ""}>
+      <summary class="period-title">
+        <span>
+          <strong>${title} - ${shortDate(period.end)}</strong>
+          <em>${incomeText}</em>
+        </span>
+        <b class="period-leftover ${moneyClass(period.leftover)}">${money(period.leftover)}</b>
+      </summary>
+      <div class="period-money">
+        <div><span>Start</span><b class="${moneyClass(period.openingBalance)}">${money(period.openingBalance)}</b></div>
+        <div><span>Paychecks</span><b class="${moneyClass(period.incomeTotal)}">${money(period.incomeTotal)}</b></div>
+        <div><span>Bills</span><b class="${moneyClass(-period.billTotal)}">${money(-period.billTotal)}</b></div>
+        <div><span>Weekly pot</span><b class="${moneyClass(-period.spendingReserveTotal)}">${money(-period.spendingReserveTotal)}</b></div>
+        <div><span>Leftover</span><b class="${moneyClass(period.leftover)}">${money(period.leftover)}</b></div>
+      </div>
+      <div class="period-details">
+        <div>
+          <h4>Income</h4>
+          <div class="list">${incomeDetails}</div>
+        </div>
+        <div>
+          <h4>Bills</h4>
+          <div class="list">${billDetails}</div>
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function renderForecastDetail(name, date, amount) {
+  return `
+    <article class="row compact-row">
+      <div>
+        <strong>${escapeHtml(name)}</strong>
+        <span>${shortDate(date)}</span>
+      </div>
+      ${moneyHtml(amount)}
     </article>
   `;
 }
 
 function renderTransaction(transaction) {
   return `
-    <article class="row">
+    <article class="row" data-transaction-id="${escapeHtml(transaction.id)}">
       <div>
         <strong>${transaction.description}</strong>
         <span>${shortDate(parseLocalDate(transaction.date))} · ${transaction.category}</span>
       </div>
-      <b>${money(transaction.amount)}</b>
+      ${moneyHtml(-transaction.amount)}
     </article>
   `;
 }
@@ -294,7 +952,59 @@ function renderTransaction(transaction) {
 function renderCategoryChips(transactions) {
   const totals = { Groceries: 0, Gas: 0, Spending: 0 };
   for (const transaction of transactions) totals[transaction.category] = (totals[transaction.category] || 0) + transaction.amount;
-  return Object.entries(totals).map(([name, total]) => `<span>${name}: ${money(total)}</span>`).join("");
+  return Object.entries(totals).map(([name, total]) => `<span>${name}: ${moneyHtml(-total)}</span>`).join("");
+}
+
+function renderCategoryCards(transactions) {
+  const totals = categoryTotals(transactions);
+  return ["Groceries", "Gas", "Spending"].map((name) => {
+    const spent = totals[name] || 0;
+    const percent = Math.min((spent / state.weeklyLimit) * 100, 100);
+    return `
+      <article class="category-card">
+        <div>
+          <span>${name}</span>
+          <strong class="${moneyClass(-spent)}">${money(-spent)}</strong>
+        </div>
+        <div class="mini-meter"><span style="width: ${percent}%"></span></div>
+      </article>
+    `;
+  }).join("");
+}
+
+function allocatePot(total) {
+  const max = state.weeklyLimit || 500;
+  const scale = max ? Math.min(total / max, 1) : 0;
+  const groceries = roundMoney(200 * scale);
+  const gas = roundMoney(40 * scale);
+  const spending = roundMoney(Math.max(total - groceries - gas, 0));
+  const denominator = total || 1;
+  return {
+    groceries,
+    gas,
+    spending,
+    groceriesPercent: roundMoney((groceries / denominator) * 100),
+    gasPercent: roundMoney((gas / denominator) * 100),
+    spendingPercent: roundMoney((spending / denominator) * 100),
+  };
+}
+
+function roundMoney(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function categoryTotals(transactions) {
+  const totals = { Groceries: 0, Gas: 0, Spending: 0 };
+  for (const transaction of transactions) totals[transaction.category] = (totals[transaction.category] || 0) + transaction.amount;
+  return totals;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function parseCsv(text) {
@@ -356,6 +1066,29 @@ function addDays(date, days) {
   return next;
 }
 
+function dayDiff(start, end) {
+  return Math.round((stripTime(end) - stripTime(start)) / 86400000);
+}
+
+function isSameDate(first, second) {
+  return toInputDate(first) === toInputDate(second);
+}
+
+function billDay(bill) {
+  return parseLocalDate(bill.date).getDate();
+}
+
+function daysInMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+}
+
+function closestWeekday(date) {
+  const day = date.getDay();
+  if (day === 6) return addDays(date, -1);
+  if (day === 0) return addDays(date, 1);
+  return date;
+}
+
 function toInputDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -366,6 +1099,22 @@ function shortDate(date) {
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+
+function moneyClass(value) {
+  if (value < 0) return "money-negative";
+  if (value > 0) return "money-positive";
+  return "money-zero";
+}
+
+function moneyHtml(value) {
+  return `<span class="${moneyClass(value)}">${money(value)}</span>`;
+}
+
+function setMoney(element, value) {
+  element.textContent = money(value);
+  element.classList.remove("money-positive", "money-negative", "money-zero", "danger");
+  element.classList.add(moneyClass(value));
 }
 
 function resetApp() {
