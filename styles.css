@@ -103,6 +103,35 @@ select {
   font-size: 0.9rem;
 }
 
+.sync-panel {
+  margin-bottom: 14px;
+  border: 1px solid rgba(72, 255, 244, 0.32);
+  border-radius: 8px;
+  background: rgba(8, 8, 12, 0.9);
+}
+
+.sync-form {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(130px, 0.6fr) auto auto;
+  gap: 10px;
+}
+
+.sync-good {
+  color: var(--green) !important;
+}
+
+.sync-bad {
+  color: var(--pink) !important;
+}
+
+.sync-working {
+  color: var(--cyan) !important;
+}
+
+.sync-muted {
+  color: var(--muted) !important;
+}
+
 .tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -865,6 +894,7 @@ select {
   .entry-form,
   .bill-form,
   .income-form,
+  .sync-form,
   .custom-row,
   .period-money,
   .period-details,

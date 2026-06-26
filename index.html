@@ -8,6 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <main class="app">
@@ -26,6 +27,21 @@
         </div>
         <button class="text-button small-button" id="dismissInstallBanner" type="button">Hide</button>
       </section>
+
+      <details class="sync-panel compact-panel" id="syncPanel">
+        <summary class="section-heading">
+          <h3>Shared portal</h3>
+          <span id="syncStatus">Local only</span>
+        </summary>
+        <form class="sync-form" id="syncForm">
+          <input name="url" type="url" placeholder="Supabase project URL" autocomplete="off" />
+          <input name="anonKey" type="password" placeholder="anon public key" autocomplete="off" />
+          <input name="householdId" type="text" placeholder="household code" autocomplete="off" />
+          <button class="primary-button" type="submit">Save sync</button>
+          <button class="text-button small-button" id="syncNowButton" type="button">Sync now</button>
+        </form>
+        <p class="helper">Use the same Supabase settings and household code on both phones.</p>
+      </details>
 
       <nav class="tabs" aria-label="App pages">
         <button class="tab-button active" type="button" data-tab="home">Home</button>

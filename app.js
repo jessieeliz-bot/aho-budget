@@ -1,6 +1,8 @@
 const STORAGE_KEY = "xx-money-v5";
 const HIDDEN_TRANSACTIONS_KEY = "xx-money-hidden-transactions-v1";
 const INSTALL_BANNER_KEY = "xx-money-install-banner-dismissed";
+const SUPABASE_CONFIG_KEY = "xx-money-supabase-config-v1";
+const SYNC_TABLE = "budget_state";
 
 const sheetSeed = {
   weeklyLimit: 500,
@@ -50,12 +52,19 @@ const sheetSeed = {
 };
 
 let state = loadState();
+let supabaseClient = null;
+let syncTimer = null;
+let isApplyingRemote = false;
 
 const els = {
   tabs: document.querySelectorAll("[data-tab]"),
   pages: document.querySelectorAll("[data-page]"),
   installBanner: document.querySelector("#installBanner"),
   dismissInstallBanner: document.querySelector("#dismissInstallBanner"),
+  syncPanel: document.querySelector("#syncPanel"),
+  syncForm: document.querySelector("#syncForm"),
+  syncStatus: document.querySelector("#syncStatus"),
+  syncNowButton: document.querySelector("#syncNowButton"),
   balanceForm: document.querySelector("#balanceForm"),
   balanceInput: document.querySelector("#balanceInput"),
   afterBills: document.querySelector("#afterBills"),
@@ -103,6 +112,8 @@ const els = {
 
 els.tabs.forEach((tab) => tab.addEventListener("click", switchTab));
 els.dismissInstallBanner.addEventListener("click", dismissInstallBanner);
+els.syncForm.addEventListener("submit", saveSyncConfig);
+els.syncNowButton.addEventListener("click", syncNow);
 els.balanceForm.addEventListener("submit", updateBalance);
 els.billForm.addEventListener("submit", addBill);
 els.billForm.elements.repeat.addEventListener("change", updateCustomRepeatVisibility);
@@ -119,6 +130,7 @@ els.resetDemoButton.addEventListener("click", resetApp);
 
 registerServiceWorker();
 render();
+initializeSync();
 
 function loadState() {
   try {
@@ -130,6 +142,154 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  queueRemoteSave();
+}
+
+function loadSyncConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SUPABASE_CONFIG_KEY));
+    if (!saved?.url || !saved?.anonKey || !saved?.householdId) return null;
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
+function saveSyncConfig(event) {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const config = {
+    url: String(form.get("url") || "").trim().replace(/\/$/, ""),
+    anonKey: String(form.get("anonKey") || "").trim(),
+    householdId: String(form.get("householdId") || "").trim().toLowerCase(),
+  };
+
+  if (!config.url || !config.anonKey || !config.householdId) {
+    setSyncStatus("Fill in all 3 sync fields", "bad");
+    return;
+  }
+
+  localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify(config));
+  setSyncStatus("Saved, syncing...", "working");
+  initializeSync({ force: true });
+}
+
+async function initializeSync({ force = false } = {}) {
+  const config = loadSyncConfig();
+  fillSyncForm(config);
+
+  if (!config) {
+    setSyncStatus("Local only", "muted");
+    return;
+  }
+
+  if (!window.supabase?.createClient) {
+    setSyncStatus("Supabase library did not load", "bad");
+    return;
+  }
+
+  if (!supabaseClient || force) {
+    supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+  }
+
+  await loadRemoteState(config);
+}
+
+function fillSyncForm(config) {
+  if (!els.syncForm) return;
+  els.syncForm.elements.url.value = config?.url || "";
+  els.syncForm.elements.anonKey.value = config?.anonKey || "";
+  els.syncForm.elements.householdId.value = config?.householdId || "";
+}
+
+async function loadRemoteState(config = loadSyncConfig()) {
+  if (!supabaseClient || !config) return;
+
+  try {
+    setSyncStatus("Checking shared budget...", "working");
+    const { data, error } = await supabaseClient
+      .from(SYNC_TABLE)
+      .select("data, updated_at")
+      .eq("household_id", config.householdId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data?.data?.state) {
+      applyRemoteData(data.data);
+      setSyncStatus(`Synced ${formatSyncTime(data.updated_at)}`, "good");
+      return;
+    }
+
+    await saveRemoteState();
+    setSyncStatus("Shared budget created", "good");
+  } catch (error) {
+    setSyncStatus(`Sync error: ${error.message}`, "bad");
+  }
+}
+
+function applyRemoteData(data) {
+  isApplyingRemote = true;
+  try {
+    state = { ...structuredClone(sheetSeed), ...data.state };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(HIDDEN_TRANSACTIONS_KEY, JSON.stringify(data.hiddenTransactionIds || []));
+  } finally {
+    isApplyingRemote = false;
+  }
+  render();
+}
+
+function sharedData() {
+  return {
+    appVersion: 1,
+    state,
+    hiddenTransactionIds: [...hiddenTransactions()],
+  };
+}
+
+function queueRemoteSave() {
+  if (isApplyingRemote || !supabaseClient || !loadSyncConfig()) return;
+  clearTimeout(syncTimer);
+  setSyncStatus("Saving...", "working");
+  syncTimer = setTimeout(saveRemoteState, 700);
+}
+
+async function saveRemoteState() {
+  const config = loadSyncConfig();
+  if (!supabaseClient || !config) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from(SYNC_TABLE)
+      .upsert({
+        household_id: config.householdId,
+        data: sharedData(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) throw error;
+    setSyncStatus("Synced just now", "good");
+  } catch (error) {
+    setSyncStatus(`Sync error: ${error.message}`, "bad");
+  }
+}
+
+async function syncNow() {
+  if (!supabaseClient) await initializeSync();
+  await saveRemoteState();
+  await loadRemoteState();
+}
+
+function setSyncStatus(message, tone = "muted") {
+  els.syncStatus.textContent = message;
+  els.syncStatus.classList.remove("sync-good", "sync-bad", "sync-working", "sync-muted");
+  els.syncStatus.classList.add(`sync-${tone}`);
+}
+
+function formatSyncTime(value) {
+  if (!value) return "just now";
+  return new Date(value).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 function render() {
@@ -365,6 +525,7 @@ function hideTransaction(event) {
   const hidden = hiddenTransactions();
   hidden.add(row.dataset.transactionId);
   localStorage.setItem(HIDDEN_TRANSACTIONS_KEY, JSON.stringify([...hidden]));
+  queueRemoteSave();
   render();
 }
 
@@ -1120,6 +1281,7 @@ function setMoney(element, value) {
 function resetApp() {
   localStorage.removeItem(STORAGE_KEY);
   state = structuredClone(sheetSeed);
+  saveState();
   render();
 }
 

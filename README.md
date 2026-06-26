@@ -17,6 +17,7 @@ This version intentionally starts simple:
 - editable one-time and recurring income
 - manual spending entry
 - statement upload from bank exports with auto-categorized spending
+- optional Supabase shared portal sync across phones
 
 ## Source Of Truth
 
@@ -50,3 +51,20 @@ http://localhost:5173
 ## Phone Home Screen
 
 Open the local or hosted app in Safari/Chrome, then use **Add to Home Screen**.
+
+## Supabase Shared Portal
+
+To make both phones see the same entries:
+
+1. Open the Supabase project named `budgeting-app`.
+2. Go to **SQL Editor**.
+3. Paste and run the contents of `supabase-schema.sql`.
+4. Go to **Project Settings > API**.
+5. Copy the **Project URL** and **anon public** key.
+6. Open the app, expand **Shared portal**, and paste:
+   - Supabase project URL
+   - anon public key
+   - the same private household code on both phones
+7. Tap **Save sync**.
+
+This first version shares one household budget row and uses the household code to point both devices at the same data. The anon key is public in browser apps, so do not treat this as bank-grade security yet. Supabase Auth can be added next if you want real sign-in.
